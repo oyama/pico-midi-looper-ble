@@ -1,6 +1,7 @@
 # Pico MIDI Looper
 
-Pico MIDI Looper is a super-minimal wireless MIDI looper built with the $6 Raspberry Pi Pico W.
+Make beats fly from a $6 microcontroller.
+Pico MIDI Looper turns your Raspberry Pi Pico W into a one-button wireless rhythm looper.
 With just the single onboard button, you can record and play back a one-bar rhythm loop consisting of kick and snare tracks. The loop is transmitted over BLE-MIDI in real time and can be played by software instruments on smartphones or PCs that support BLE-MIDI.
 This project is designed to serve as:
 
