@@ -46,3 +46,6 @@ Simplicity is at the heart of this project.
 We welcome pull requests and issues that help refine the code or improve the user experience —while keeping things minimal.
 Feel free to fork the project and adapt it to your own creative or educational needs.
 We’d love to see how you build upon this tiny MIDI machine.
+
+Made with love in Japan.  
+We hope you enjoy building with it as much as we did.
