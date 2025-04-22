@@ -6,7 +6,6 @@
 #include <stdio.h>
 
 #include "midi_service.h"
-//#include "pico/btstack_cyw43.h"
 #include "btstack.h"
 
 // clang-format off
@@ -37,9 +36,7 @@ void send_midi_note(uint8_t channel, uint8_t note, uint8_t velocity) {
     att_server_notify(con_handle, MIDI_NOTE_HANDLE, packet, sizeof(packet));
 }
 
-bool ble_midi_connection_status(void) {
-    return con_handle != HCI_CON_HANDLE_INVALID;
-}
+bool ble_midi_connection_status(void) { return con_handle != HCI_CON_HANDLE_INVALID; }
 
 static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
     (void)channel;

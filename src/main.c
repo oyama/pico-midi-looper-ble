@@ -11,12 +11,13 @@
 #include "pico/cyw43_arch.h"
 #include "pico/stdlib.h"
 
-#define MASTER_BPM 140
-#define STEPS_PER_BEAT 4
-#define NUM_STEPS 16
-#define CLICK_DIVISION (NUM_STEPS / 4)
-#define STEP_MS (60000 / (MASTER_BPM * STEPS_PER_BEAT))
-#define MAX_RECORD_STEPS NUM_STEPS
+#define MASTER_BPM 120
+#define LOOP_LENGTH_BARS 1
+#define STEPS_PER_QUARTER 4
+#define BEATS_PER_BAR 4
+#define TOTAL_STEPS (STEPS_PER_QUARTER * BEATS_PER_BAR * LOOP_LENGTH_BARS)
+#define CLICK_DIVISION (TOTAL_STEPS / STEPS_PER_QUARTER)
+#define STEP_MS (int)((float)60000 / (float)(MASTER_BPM * STEPS_PER_QUARTER))
 
 #define LONGPRESS_US (500 * 1000)
 
@@ -40,21 +41,28 @@ typedef struct {
     const char *name;
     uint8_t note;
     uint8_t channel;
-    bool data[NUM_STEPS];
+    bool data[TOTAL_STEPS];
 } track_t;
 
 #define NUM_TRACKS 2
 track_t tracks[NUM_TRACKS] = {
-    {"Bass", STANDARD_BASS_DRUM, 9, {0}},
-    {"Snare", STANDARD_SNARE, 9, {0}},
+    {"Bass", STANDARD_BASS_DRUM, MIDI_CHANNEL_10, {0}},
+    {"Snare", STANDARD_SNARE, MIDI_CHANNEL_10, {0}},
 };
 
-static bool recording = false;
-static uint8_t record_step_count = 0;
-static uint8_t current_track = 0;
-static volatile bool track_switch_pending = false;
-static volatile bool record_pending_on_press = false;
-static uint8_t current_step = 0;
+typedef struct {
+    bool is_recording;
+    uint8_t record_step_count;
+    uint8_t current_track;
+    bool track_switch_pending;
+    uint8_t current_step;
+} recording_status_t;
+
+static recording_status_t recording_status = {.is_recording = false,
+                                              .record_step_count = 0,
+                                              .current_track = 0,
+                                              .track_switch_pending = false,
+                                              .current_step = 0};
 static bool onboard_led = false;
 
 static inline void set_onboard_led(bool on) { onboard_led = on; }
@@ -89,7 +97,7 @@ void led_task(void) {
 
 static void print_track(const char *label, bool *track) {
     printf("%s", label);
-    for (size_t i = 0; i < NUM_STEPS; i++) {
+    for (size_t i = 0; i < TOTAL_STEPS; i++) {
         printf("%s", track[i] ? "x" : " ");
     }
     printf("\n");
@@ -97,23 +105,24 @@ static void print_track(const char *label, bool *track) {
 
 static void print_step_indicator(const char *label, int step) {
     printf("%s", label);
-    for (size_t i = 0; i < NUM_STEPS; i++) {
+    for (size_t i = 0; i < TOTAL_STEPS; i++) {
         printf("%s", (size_t)step == i ? "^" : " ");
     }
     printf("\n");
 }
 
 static void step_timer_handler(btstack_timer_source_t *ts) {
+    uint64_t start_us = time_us_64();
     bool connection = ble_midi_connection_status();
 
-    printf(
-        "%s (Track %s)\n",
-        (connection ? (recording ? ANSI_MAGENTA "Record" ANSI_CLEAR : ANSI_CYAN "Play" ANSI_CLEAR)
-                    : "Pause"),
-        tracks[current_track].name);
+    printf("%s (Track %s)\n",
+           (connection ? (recording_status.is_recording ? ANSI_MAGENTA "Record" ANSI_CLEAR
+                                                        : ANSI_CYAN "Play" ANSI_CLEAR)
+                       : "Pause"),
+           tracks[recording_status.current_track].name);
     print_track("Track Buss  ", tracks[0].data);
     print_track("Track Snare ", tracks[1].data);
-    print_step_indicator("            ", current_step);
+    print_step_indicator("            ", recording_status.current_step);
 
     if (!connection) {
         // Waiting for BLE-MIDI connection
@@ -121,108 +130,117 @@ static void step_timer_handler(btstack_timer_source_t *ts) {
     }
 
     // play click
-    if ((current_step % (NUM_STEPS / CLICK_DIVISION)) == 0) {
-        send_midi_click(current_step == 0);
+    if ((recording_status.current_step % (TOTAL_STEPS / CLICK_DIVISION)) == 0) {
+        send_midi_click(recording_status.current_step == 0);
     }
 
     // play note per track
     for (uint8_t i = 0; i < NUM_TRACKS; i++) {
-        bool note_on = tracks[i].data[current_step];
+        bool note_on = tracks[i].data[recording_status.current_step];
         if (note_on) {
-            if (!recording || current_track != i)
+            if (!recording_status.is_recording || recording_status.current_track != i)
                 send_midi_note(tracks[i].channel, tracks[i].note, 0x7f);
-            if (current_track == i && !recording)
+            if (recording_status.current_track == i && !recording_status.is_recording)
                 set_onboard_led(1);
-        } else if (current_track == i && !recording) {
+        } else if (recording_status.current_track == i && !recording_status.is_recording) {
             set_onboard_led(0);
         }
     }
 
     // recording coltroll
-    if (recording) {
-        record_step_count++;
+    if (recording_status.is_recording) {
+        recording_status.record_step_count++;
         set_onboard_led(1);
     }
-    if (record_step_count >= MAX_RECORD_STEPS) {
-        if (recording)
+    if (recording_status.record_step_count >= TOTAL_STEPS) {
+        if (recording_status.is_recording)
             set_onboard_led(0);
-        recording = false;
+        recording_status.is_recording = false;
     }
 
     // switch track
-    if (track_switch_pending) {
-        current_track = (current_track + 1) % NUM_TRACKS;
-        track_switch_pending = false;
+    if (recording_status.track_switch_pending) {
+        recording_status.current_track = (recording_status.current_track + 1) % NUM_TRACKS;
+        recording_status.track_switch_pending = false;
         send_midi_note(9, RIDE_CYMBAL1, 0x7f);
     }
 
-    current_step = (current_step + 1) % NUM_STEPS;
+    recording_status.current_step = (recording_status.current_step + 1) % TOTAL_STEPS;
 
 finish:
-    btstack_run_loop_set_timer(ts, STEP_MS);
+    uint64_t handler_delay_ms = (time_us_64() - start_us) / 1000;
+    btstack_run_loop_set_timer(ts, STEP_MS - handler_delay_ms);
     btstack_run_loop_add_timer(ts);
 }
 
+typedef enum { STATE_IDLE, STATE_PRESSED_SHORT, STATE_PRESSED_LONG } button_state_t;
+
 int main(void) {
-    stdio_init_all();
-    printf("[MAIN] BLE MIDI Looper start\n");
-
-    cyw43_arch_init();
-
-    ble_midi_init(step_timer_handler, STEP_MS);
-
-    bool last_button_state = true;
-    bool button_pressed = false;
     uint64_t press_start_us = 0;
-    bool long_press_triggered = false;
-    bool undo_track[NUM_STEPS] = {0};
+    bool undo_track[TOTAL_STEPS] = {0};
+    bool record_pending_on_press = false;
 
+    stdio_init_all();
+    cyw43_arch_init();
+    ble_midi_init(step_timer_handler, STEP_MS);
+    printf("[MAIN] BLE MIDI Looper start\n");
+    button_state_t state = STATE_IDLE;
     while (true) {
-        led_task();
-
         bool current_button_state = bb_get_bootsel_button();
         uint64_t now_us = time_us_64();
 
-        // Click down
-        if (current_button_state && !last_button_state) {
-            press_start_us = now_us;
-            button_pressed = true;
-            long_press_triggered = false;
-            record_pending_on_press = true;
+        switch (state) {
+            case STATE_IDLE:
+                if (current_button_state) {
+                    // Button down
+                    press_start_us = now_us;
+                    record_pending_on_press = true;
 
-            // Save tracks in case of long presses
-            memcpy(undo_track, tracks[current_track].data, NUM_STEPS);
+                    send_midi_note(tracks[recording_status.current_track].channel,
+                                   tracks[recording_status.current_track].note, 0x7f);
 
-            send_midi_note(tracks[current_track].channel, tracks[current_track].note, 0x7f);
+                    // Save tracks in care of long press
+                    memcpy(undo_track, tracks[recording_status.current_track].data, TOTAL_STEPS);
+
+                    state = STATE_PRESSED_SHORT;
+                }
+                break;
+            case STATE_PRESSED_SHORT:
+                if (!current_button_state) {
+                    // Release short press
+                    state = STATE_IDLE;
+                } else if (now_us - press_start_us >= LONGPRESS_US) {
+                    // Long press
+                    recording_status.track_switch_pending = true;
+
+                    // Restoring Tracks
+                    memcpy(tracks[recording_status.current_track].data, undo_track, TOTAL_STEPS);
+
+                    state = STATE_PRESSED_LONG;
+                }
+                break;
+            case STATE_PRESSED_LONG:
+                if (!current_button_state)
+                    // Release long press
+                    state = STATE_IDLE;
+                break;
+            default:
+                break;
         }
-
-        // Long press
-        if (current_button_state && button_pressed && !long_press_triggered &&
-            (now_us - press_start_us >= LONGPRESS_US)) {
-            track_switch_pending = true;
-            long_press_triggered = true;
-
-            // Restoring Tracks
-            memcpy(tracks[current_track].data, undo_track, NUM_STEPS);
-        }
-
-        // release short click
-        if (!current_button_state && last_button_state && button_pressed) {
-            button_pressed = false;
-        }
-        last_button_state = current_button_state;
 
         if (record_pending_on_press) {
-            uint32_t idx = current_step;
-            if (!recording) {
-                record_step_count = 0;
-                recording = true;
-                memset(tracks[current_track].data, 0, NUM_STEPS);
+            if (!recording_status.is_recording) {
+                recording_status.record_step_count = 0;
+                recording_status.is_recording = true;
+                memset(tracks[recording_status.current_track].data, 0, TOTAL_STEPS);
             }
 
-            tracks[current_track].data[idx] = true;
+            tracks[recording_status.current_track].data[recording_status.current_step] = true;
+
             record_pending_on_press = false;
         }
+
+        led_task();
     }
 
     return 0;

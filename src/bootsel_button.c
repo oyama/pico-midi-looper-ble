@@ -7,7 +7,7 @@
 #include <hardware/structs/ioqspi.h>
 #include <hardware/sync.h>
 
-#define BUTTON_DEBOUNCE_MAX   10
+#define BUTTON_DEBOUNCE_MAX 10
 
 bool __no_inline_not_in_flash_func(bb_get_bootsel_button)() {
     static uint8_t counter = 0;
@@ -27,12 +27,13 @@ bool __no_inline_not_in_flash_func(bb_get_bootsel_button)() {
 
     // debounce
     if (button_state) {
-        if (counter < BUTTON_DEBOUNCE_MAX) counter++;
+        if (counter < BUTTON_DEBOUNCE_MAX)
+            counter++;
     } else {
-        if (counter > 0) counter--;
+        if (counter > 0)
+            counter--;
     }
 
-    stable_state = (counter == BUTTON_DEBOUNCE_MAX) ? true :
-                   (counter == 0) ? false : stable_state;
+    stable_state = (counter == BUTTON_DEBOUNCE_MAX) ? true : (counter == 0) ? false : stable_state;
     return stable_state;
 }
