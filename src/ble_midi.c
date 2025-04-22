@@ -23,31 +23,6 @@ typedef enum {
     MIDI_NOTE_HANDLE = ATT_CHARACTERISTIC_7772E5DB_3868_4112_A1A9_F2669D106BF3_01_VALUE_HANDLE,
 } attribute_handle_t;
 
-enum {
-    MIDI_CHANNEL_1 = 0,
-    MIDI_CHANNEL_2 = 1,
-    MIDI_CHANNEL_3 = 2,
-    MIDI_CHANNEL_4 = 3,
-    MIDI_CHANNEL_5 = 4,
-    MIDI_CHANNEL_6 = 5,
-    MIDI_CHANNEL_7 = 6,
-    MIDI_CHANNEL_8 = 7,
-    MIDI_CHANNEL_9 = 8,
-    MIDI_CHANNEL_10 = 9,
-    MIDI_CHANNEL_11 = 10,
-    MIDI_CHANNEL_12 = 11,
-    MIDI_CHANNEL_13 = 12,
-    MIDI_CHANNEL_14 = 13,
-    MIDI_CHANNEL_15 = 14,
-    MIDI_CHANNEL_16 = 15,
-};
-
-enum {
-    STANDARD_BASS_DRUM = 36,
-    SIDE_STICK         = 37,
-    STANDARD_SNARE     = 38,
-};
-
 static btstack_packet_callback_registration_t hci_event_callback_registration;
 static hci_con_handle_t con_handle = HCI_CON_HANDLE_INVALID;
 static btstack_timer_source_t step_timer;
@@ -62,11 +37,9 @@ void send_midi_note(uint8_t channel, uint8_t note, uint8_t velocity) {
     att_server_notify(con_handle, MIDI_NOTE_HANDLE, packet, sizeof(packet));
 }
 
-void send_midi_click(bool accent) { send_midi_note(MIDI_CHANNEL_1, SIDE_STICK, accent ? 0x5f : 0x20); }
-
-void send_midi_bass(void) { send_midi_note(MIDI_CHANNEL_10, STANDARD_BASS_DRUM, 0x7f); }
-
-void send_midi_snare(void) { send_midi_note(MIDI_CHANNEL_10, STANDARD_SNARE, 0x7f); }
+bool ble_midi_connection_status(void) {
+    return con_handle != HCI_CON_HANDLE_INVALID;
+}
 
 static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
     (void)channel;

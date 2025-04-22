@@ -6,23 +6,35 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "pico/cyw43_arch.h"
-#include "pico/stdlib.h"
 #include "ble_midi.h"
 #include "bootsel_button.h"
+#include "pico/cyw43_arch.h"
+#include "pico/stdlib.h"
 
-#define MASTER_BPM        140
-#define STEPS_PER_BEAT    4
-#define NUM_STEPS         16
-#define CLICK_DIVISION    (NUM_STEPS / 4)
-#define STEP_MS           (60000 / (MASTER_BPM * STEPS_PER_BEAT))
-#define MAX_RECORD_STEPS  NUM_STEPS
+#define MASTER_BPM 140
+#define STEPS_PER_BEAT 4
+#define NUM_STEPS 16
+#define CLICK_DIVISION (NUM_STEPS / 4)
+#define STEP_MS (60000 / (MASTER_BPM * STEPS_PER_BEAT))
+#define MAX_RECORD_STEPS NUM_STEPS
 
-#define LONGPRESS_US      (500 * 1000)
+#define LONGPRESS_US (500 * 1000)
 
-#define ANSI_CYAN     "\e[36m"
-#define ANSI_MAGENTA  "\e[35m"
-#define ANSI_CLEAR    "\e[0m"
+#define ANSI_CYAN "\e[36m"
+#define ANSI_MAGENTA "\e[35m"
+#define ANSI_CLEAR "\e[0m"
+
+enum {
+    MIDI_CHANNEL_1 = 0,
+    MIDI_CHANNEL_10 = 9,
+};
+
+enum {
+    STANDARD_BASS_DRUM = 36,
+    SIDE_STICK = 37,
+    STANDARD_SNARE = 38,
+    RIDE_CYMBAL1 = 51,
+};
 
 typedef struct {
     const char *name;
@@ -31,14 +43,10 @@ typedef struct {
     bool data[NUM_STEPS];
 } track_t;
 
-#define MIDI_ACCOUSTIC_BASS_DRUM  36
-#define MIDI_ACOUSTIC_SNARE       38
-#define MIDI_RIDE_CYMBAL1  51
-
 #define NUM_TRACKS 2
 track_t tracks[NUM_TRACKS] = {
-    { "Bass", MIDI_ACCOUSTIC_BASS_DRUM, 9, {0} },
-    { "Snare", MIDI_ACOUSTIC_SNARE, 9, {0} },
+    {"Bass", STANDARD_BASS_DRUM, 9, {0}},
+    {"Snare", STANDARD_SNARE, 9, {0}},
 };
 
 static bool recording = false;
@@ -47,9 +55,36 @@ static uint8_t current_track = 0;
 static volatile bool track_switch_pending = false;
 static volatile bool record_pending_on_press = false;
 static uint8_t current_step = 0;
+static bool onboard_led = false;
 
-static inline void set_led(bool on) {
-    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, on);
+static inline void set_onboard_led(bool on) { onboard_led = on; }
+
+static void send_midi_click(bool accent) {
+    send_midi_note(MIDI_CHANNEL_1, SIDE_STICK, accent ? 0x5f : 0x20);
+}
+
+static void send_midi_bass(void) { send_midi_note(MIDI_CHANNEL_10, STANDARD_BASS_DRUM, 0x7f); }
+
+static void send_midi_snare(void) { send_midi_note(MIDI_CHANNEL_10, STANDARD_SNARE, 0x7f); }
+
+void led_task(void) {
+    if (!ble_midi_connection_status()) {
+        // If there is no BLE connection, the LED will blink to indicate "PAUSE" status
+        static absolute_time_t next_toggle_time;
+        static bool led_on = false;
+        const int on_duration_ms = 100;
+        const int off_duration_ms = 1300;
+
+        if (absolute_time_diff_us(get_absolute_time(), next_toggle_time) < 0) {
+            led_on = !led_on;
+            cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, led_on);
+            next_toggle_time =
+                delayed_by_ms(get_absolute_time(), led_on ? on_duration_ms : off_duration_ms);
+        }
+        return;
+    }
+
+    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, onboard_led);
 }
 
 static void print_track(const char *label, bool *track) {
@@ -69,12 +104,21 @@ static void print_step_indicator(const char *label, int step) {
 }
 
 static void step_timer_handler(btstack_timer_source_t *ts) {
-    printf("%s (Track %s)\n",
-           (recording ? ANSI_MAGENTA "Record" ANSI_CLEAR : ANSI_CYAN "Play" ANSI_CLEAR),
-           tracks[current_track].name);
+    bool connection = ble_midi_connection_status();
+
+    printf(
+        "%s (Track %s)\n",
+        (connection ? (recording ? ANSI_MAGENTA "Record" ANSI_CLEAR : ANSI_CYAN "Play" ANSI_CLEAR)
+                    : "Pause"),
+        tracks[current_track].name);
     print_track("Track Buss  ", tracks[0].data);
     print_track("Track Snare ", tracks[1].data);
     print_step_indicator("            ", current_step);
+
+    if (!connection) {
+        // Waiting for BLE-MIDI connection
+        goto finish;
+    }
 
     // play click
     if ((current_step % (NUM_STEPS / CLICK_DIVISION)) == 0) {
@@ -88,20 +132,20 @@ static void step_timer_handler(btstack_timer_source_t *ts) {
             if (!recording || current_track != i)
                 send_midi_note(tracks[i].channel, tracks[i].note, 0x7f);
             if (current_track == i && !recording)
-                set_led(1);
+                set_onboard_led(1);
         } else if (current_track == i && !recording) {
-            set_led(0);
+            set_onboard_led(0);
         }
     }
 
     // recording coltroll
     if (recording) {
         record_step_count++;
-        set_led(1);
+        set_onboard_led(1);
     }
     if (record_step_count >= MAX_RECORD_STEPS) {
         if (recording)
-            set_led(0);
+            set_onboard_led(0);
         recording = false;
     }
 
@@ -109,11 +153,12 @@ static void step_timer_handler(btstack_timer_source_t *ts) {
     if (track_switch_pending) {
         current_track = (current_track + 1) % NUM_TRACKS;
         track_switch_pending = false;
-        send_midi_note(9, MIDI_RIDE_CYMBAL1, 0x7f);
+        send_midi_note(9, RIDE_CYMBAL1, 0x7f);
     }
 
     current_step = (current_step + 1) % NUM_STEPS;
 
+finish:
     btstack_run_loop_set_timer(ts, STEP_MS);
     btstack_run_loop_add_timer(ts);
 }
@@ -123,6 +168,7 @@ int main(void) {
     printf("[MAIN] BLE MIDI Looper start\n");
 
     cyw43_arch_init();
+
     ble_midi_init(step_timer_handler, STEP_MS);
 
     bool last_button_state = true;
@@ -132,6 +178,8 @@ int main(void) {
     bool undo_track[NUM_STEPS] = {0};
 
     while (true) {
+        led_task();
+
         bool current_button_state = bb_get_bootsel_button();
         uint64_t now_us = time_us_64();
 
@@ -149,7 +197,8 @@ int main(void) {
         }
 
         // Long press
-        if (current_button_state && button_pressed && !long_press_triggered && (now_us - press_start_us >= LONGPRESS_US)) {
+        if (current_button_state && button_pressed && !long_press_triggered &&
+            (now_us - press_start_us >= LONGPRESS_US)) {
             track_switch_pending = true;
             long_press_triggered = true;
 
