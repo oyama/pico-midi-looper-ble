@@ -1,0 +1,65 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # タグをPushしたときだけリリースを作成する
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Clean workspace
+      run: |
+        echo "Cleaning up previous run"
+        rm -rf "${{ github.workspace }}"
+        mkdir -p "${{ github.workspace }}"
+
+    - name: Install build GNU Arm Embedded Toolchain
+      run: |
+        sudo apt-get -qq update
+        sudo apt-get -qq install gcc-arm-none-eabi
+
+    - name: Checkout pico-sdk/master
+      uses: actions/checkout@v4
+      with:
+        repository: raspberrypi/pico-sdk
+        ref: master
+        path: pico-sdk
+
+    - name: Checkout pico-sdk submodules
+      working-directory: ${{github.workspace}}/pico-sdk
+      run: git submodule update --init
+
+    - name: Checkout pico-midi-looper
+      uses: actions/checkout@v4
+      with:
+        path: pico-midi-looper
+
+    - name: Create Build Environment
+      working-directory: ${{github.workspace}}/pico-midi-looper
+      run:  cmake -E make_directory ${{github.workspace}}/pico-midi-looper/build
+
+    - name: Configure CMake
+      shell: bash
+      working-directory: ${{github.workspace}}/pico-midi-looper/build
+      run: PICO_SDK_PATH=../../pico-sdk cmake .. -DPICO_BOARD=pico_w -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+
+    - name: Build
+      working-directory: ${{github.workspace}}/pico-midi-looper/build
+      shell: bash
+      run: cmake --build . --target pico-midi-looper --config $BUILD_TYPE
+
+    - name: Rename Binary with Tag
+      working-directory: pico-midi-looper/build
+      run: |
+        mv pico-midi-looper.uf2 pico-midi-looper-${{ github.ref_name }}.uf2
+
+    - name: Create GitHub Release and Upload Binary
+      uses: softprops/action-gh-release@v2
+      with:
+        files: pico-midi-looper/build/pico-midi-looper-${{ github.ref_name }}.uf2
