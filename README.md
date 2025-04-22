@@ -1,4 +1,6 @@
 # Pico MIDI Looper
+![pico midi looper 001](https://github.com/user-attachments/assets/284052ba-2bba-4661-97f4-192cda4c9b6b)
+
 
 Make beats fly from a $6 microcontroller.
 Pico MIDI Looper turns your Raspberry Pi Pico W into a one-button wireless rhythm looper.
