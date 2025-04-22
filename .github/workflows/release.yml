@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*.*.*'  # タグをPushしたときだけリリースを作成する
 
+permissions:
+  contents: write 
+
 env:
   BUILD_TYPE: Release
 
