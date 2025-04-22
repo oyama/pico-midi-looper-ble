@@ -1,7 +1,5 @@
 # Pico MIDI Looper
-![pico midi looper 001](https://github.com/user-attachments/assets/284052ba-2bba-4661-97f4-192cda4c9b6b)
 ![Build Firmware](https://github.com/oyama/pico-midi-looper/actions/workflows/build-firmware.yml/badge.svg)
-
 
 Make beats fly from a $6 microcontroller.
 Pico MIDI Looper turns your [Raspberry Pi Pico W](https://www.raspberrypi.com/products/raspberry-pi-pico/) into a one-button wireless rhythm looper.
@@ -12,6 +10,10 @@ This project is designed to serve as:
 - A template for BLE-MIDI output in physical computing and electronics projects
 - An inexpensive and accessible learning material for workshops and education
 - A toolbox component for experimental or artistic sound-based expression
+
+## 🎬 Demo Video
+
+[![Watch the Demo](https://img.youtube.com/vi/biRl0yx8jz4/0.jpg)](https://www.youtube.com/watch?v=biRl0yx8jz4)
 
 ## Features
 
