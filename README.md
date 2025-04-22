@@ -25,7 +25,7 @@ This project is designed to serve as:
 - One-bar looping at a fixed tempo (e.g., 120 BPM)
 - Wireless MIDI transmission via BLE-MIDI
 
-## Build and Installation
+## Installation
 
 You can either build the firmware yourself or download a prebuilt version:
 
