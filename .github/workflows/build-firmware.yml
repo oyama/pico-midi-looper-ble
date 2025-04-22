@@ -49,7 +49,7 @@ jobs:
       shell: bash
       run: cmake --build . --target pico-midi-looper --config $BUILD_TYPE
  
-    - name: Upload integration.uf2 as artifact
+    - name: Upload pico-midi-looper.uf2 as artifact
       uses: actions/upload-artifact@v4
       with:
         name: pico-midi-looper.uf2
