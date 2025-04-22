@@ -11,7 +11,6 @@ add_executable(${CMAKE_PROJECT_NAME}
   src/ble_midi.c
   src/bootsel_button.c
 )
-#target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -Werror -Wall -Wextra -Wnull-dereference)
 pico_btstack_make_gatt_header(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/midi_service.gatt)
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include)
 target_link_libraries(${CMAKE_PROJECT_NAME}

@@ -11,10 +11,15 @@
 #include "pico/cyw43_arch.h"
 #include "pico/stdlib.h"
 
+// Beats per minute of the master clock
 #define MASTER_BPM 120
+// Number of bars in a single loop
 #define LOOP_LENGTH_BARS 1
+// Number of sequencer steps per quarter note (e.g. 4 = 16th note resolution)
 #define STEPS_PER_QUARTER 4
+// Number of beats in a bar (time signature numerator, e.g. 4 = 4/4)
 #define BEATS_PER_BAR 4
+
 #define TOTAL_STEPS (STEPS_PER_QUARTER * BEATS_PER_BAR * LOOP_LENGTH_BARS)
 #define CLICK_DIVISION (TOTAL_STEPS / STEPS_PER_QUARTER)
 #define STEP_MS (int)((float)60000 / (float)(MASTER_BPM * STEPS_PER_QUARTER))
@@ -56,13 +61,15 @@ typedef struct {
     uint8_t current_track;
     bool track_switch_pending;
     uint8_t current_step;
+    uint64_t last_step_time_us;
 } recording_status_t;
 
 static recording_status_t recording_status = {.is_recording = false,
                                               .record_step_count = 0,
                                               .current_track = 0,
                                               .track_switch_pending = false,
-                                              .current_step = 0};
+                                              .current_step = 0,
+                                              .last_step_time_us = 0};
 static bool onboard_led = false;
 
 static inline void set_onboard_led(bool on) { onboard_led = on; }
@@ -70,10 +77,6 @@ static inline void set_onboard_led(bool on) { onboard_led = on; }
 static void send_midi_click(bool accent) {
     send_midi_note(MIDI_CHANNEL_1, SIDE_STICK, accent ? 0x5f : 0x20);
 }
-
-static void send_midi_bass(void) { send_midi_note(MIDI_CHANNEL_10, STANDARD_BASS_DRUM, 0x7f); }
-
-static void send_midi_snare(void) { send_midi_note(MIDI_CHANNEL_10, STANDARD_SNARE, 0x7f); }
 
 void led_task(void) {
     if (!ble_midi_connection_status()) {
@@ -95,6 +98,7 @@ void led_task(void) {
     cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, onboard_led);
 }
 
+// Prints track pattern to stdout with step indicators
 static void print_track(const char *label, bool *track) {
     printf("%s", label);
     for (size_t i = 0; i < TOTAL_STEPS; i++) {
@@ -103,6 +107,7 @@ static void print_track(const char *label, bool *track) {
     printf("\n");
 }
 
+// Prints the current step indicator below the step line
 static void print_step_indicator(const char *label, int step) {
     printf("%s", label);
     for (size_t i = 0; i < TOTAL_STEPS; i++) {
@@ -111,6 +116,10 @@ static void print_step_indicator(const char *label, int step) {
     printf("\n");
 }
 
+/*
+ * Main timing handler called every STEP_MS milliseconds.
+ * Updates playback position, triggers MIDI output, handles recording and track switching.
+ */
 static void step_timer_handler(btstack_timer_source_t *ts) {
     uint64_t start_us = time_us_64();
     bool connection = ble_midi_connection_status();
@@ -165,12 +174,26 @@ static void step_timer_handler(btstack_timer_source_t *ts) {
         send_midi_note(9, RIDE_CYMBAL1, 0x7f);
     }
 
+    recording_status.last_step_time_us = time_us_64();
     recording_status.current_step = (recording_status.current_step + 1) % TOTAL_STEPS;
 
 finish:
     uint64_t handler_delay_ms = (time_us_64() - start_us) / 1000;
     btstack_run_loop_set_timer(ts, STEP_MS - handler_delay_ms);
     btstack_run_loop_add_timer(ts);
+}
+
+/*
+ * Returns the step index closest to the specified press time.
+ * The result is quantized to the nearest step relative to the last tick.
+ */
+static uint8_t get_quantized_step_from_time(uint64_t press_time_us) {
+    int64_t delta_us = press_time_us - recording_status.last_step_time_us;
+    // Convert to step offset using rounding (nearest step)
+    int32_t relative_steps = (delta_us + (STEP_MS * 500)) / 1000 / STEP_MS;
+    uint8_t previous_step = (recording_status.current_step + TOTAL_STEPS - 1) % TOTAL_STEPS;
+    uint8_t estimated_step = (previous_step + relative_steps + TOTAL_STEPS) % TOTAL_STEPS;
+    return estimated_step;
 }
 
 typedef enum { STATE_IDLE, STATE_PRESSED_SHORT, STATE_PRESSED_LONG } button_state_t;
@@ -235,8 +258,8 @@ int main(void) {
                 memset(tracks[recording_status.current_track].data, 0, TOTAL_STEPS);
             }
 
-            tracks[recording_status.current_track].data[recording_status.current_step] = true;
-
+            uint8_t quantized_step = get_quantized_step_from_time(press_start_us);
+            tracks[recording_status.current_track].data[quantized_step] = true;
             record_pending_on_press = false;
         }
 
