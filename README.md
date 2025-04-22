@@ -27,6 +27,10 @@ This project is designed to serve as:
 
 ## Build and Installation
 
+You can either build the firmware yourself or download a prebuilt version:
+
+### Option 1: Build from source
+
 This project uses **pico-sdk** for building. Please follow the instructions in [Getting Started with Raspberry Pi Pico](https://datasheets.raspberrypi.com/pico/getting-started-with-pico.pdf) to set up your development environment in advance.
 
 ```bash
@@ -40,7 +44,9 @@ make
 
 After a successful build, drag and drop the generated `pico-midi-looper.uf2` file onto your Pico W while it's connected in `BOOTSEL` mode to complete installation.
 
-Alternatively, you can download the prebuilt firmware from the [latest GitHub release](https://github.com/oyama/pico-midi-looper/releases/latest) and install it in the same way.
+### Option 2: Download prebuilt firmware
+
+Download the latest prebuilt firmware from the [latest GitHub release](https://github.com/oyama/pico-midi-looper/releases/latest) and install it in the same way.
 
 ## License
 
