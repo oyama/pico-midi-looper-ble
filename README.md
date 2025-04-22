@@ -40,6 +40,8 @@ make
 
 After a successful build, drag and drop the generated `pico-midi-looper.uf2` file onto your Pico W while it's connected in `BOOTSEL` mode to complete installation.
 
+Alternatively, you can download the prebuilt firmware from the [latest GitHub release](https://github.com/oyama/pico-midi-looper/releases/latest) and install it in the same way.
+
 ## License
 
 This project is licensed under the 3-Clause BSD License. For details, see the [LICENSE](LICENSE.md) file.
