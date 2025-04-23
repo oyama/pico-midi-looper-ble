@@ -1,4 +1,11 @@
 /*
+ * ble_midi.c
+ *
+ * Provides BLE MIDI initialization and data transmission using BTstack.
+ * Exposes functions for sending MIDI notes and checking connection status.
+ * Handles internal ATT read callbacks and BTstack event routing.
+ *
+ *
  * Copyright 2025, Hiroyuki OYAMA
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -26,6 +33,9 @@ static btstack_packet_callback_registration_t hci_event_callback_registration;
 static hci_con_handle_t con_handle = HCI_CON_HANDLE_INVALID;
 static btstack_timer_source_t step_timer;
 
+/*
+ * Sends a single MIDI Note-On message over BLE.
+ */
 void send_midi_note(uint8_t channel, uint8_t note, uint8_t velocity) {
     if (con_handle == HCI_CON_HANDLE_INVALID)
         return;
@@ -36,8 +46,14 @@ void send_midi_note(uint8_t channel, uint8_t note, uint8_t velocity) {
     att_server_notify(con_handle, MIDI_NOTE_HANDLE, packet, sizeof(packet));
 }
 
+/*
+ * Returns true if a BLE MIDI connection is currently active.
+ */
 bool ble_midi_connection_status(void) { return con_handle != HCI_CON_HANDLE_INVALID; }
 
+/*
+ * BTstack event handler that routes incoming events and manages connection state.
+ */
 static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
     (void)channel;
     (void)size;
@@ -77,6 +93,9 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
     }
 }
 
+/*
+ * Handles ATT read requests from the BLE client for the MIDI characteristic.
+ */
 static uint16_t att_read_callback(hci_con_handle_t connection_handle, uint16_t att_handle,
                                   uint16_t offset, uint8_t *buffer, uint16_t buffer_size) {
     (void)connection_handle;

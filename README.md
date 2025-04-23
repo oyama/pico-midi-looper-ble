@@ -11,7 +11,7 @@ This project is designed to serve as:
 - An inexpensive and accessible learning material for workshops and education
 - A toolbox component for experimental or artistic sound-based expression
 
-## 🎬 Demo Video
+## Demo Video
 
 [![Watch the Demo](https://img.youtube.com/vi/biRl0yx8jz4/0.jpg)](https://www.youtube.com/watch?v=biRl0yx8jz4)
 
@@ -26,6 +26,18 @@ This project is designed to serve as:
 - Two tracks: kick and snare
 - One-bar looping at a fixed tempo (e.g., 120 BPM)
 - Wireless MIDI transmission via BLE-MIDI
+
+## State Diagram
+
+The looper operates as a simple finite state machine with four main states:
+
+- **WAITING**: BLE not connected
+- **PLAYING**: Loop is playing, can trigger sounds
+- **RECORDING**: Short press begins recording a 1-bar loop
+- **TRACK SWITCH**: Long press switches to the next track
+
+![Looper FSM](docs/looper_fsm.svg)
+
 
 ## Installation
 

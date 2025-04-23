@@ -1,0 +1,30 @@
+digraph looper_fsm {
+    rankdir=TB;
+    ranksep=1.2;
+    nodesep=1.0;
+
+    node [shape=circle, fixedsize=true, width=1.4, height=1.4,
+          fontname="Helvetica", style=filled, fillcolor=lightgray, fontsize=15];
+
+    edge [fontname="Helvetica", fontsize=15, labeldistance=1.5];
+
+    Startup [label="", shape=point, width=0.1];
+    Waiting [label="WAITING"];
+    Playing [label="PLAYING"];
+    Recording [label="RECORDING"];
+    Switching [label="TRACK\nSWITCH"];
+
+    { rank = same;  Playing Recording }
+
+    Startup -> Waiting [label="Power On"];
+
+    Waiting -> Playing [label="BLE Connected"];
+    Playing -> Waiting [label="BLE Disconnected"];
+    Recording -> Waiting [label="BLE Disconnected"];
+
+    Playing -> Recording [label="Short Press"];
+    Recording -> Playing [label="1-bar Complete"];
+
+    Playing -> Switching [label="Long Press"];
+    Switching -> Playing [label="Long Press Release"];
+}
