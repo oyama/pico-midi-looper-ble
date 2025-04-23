@@ -9,11 +9,12 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#include "pico/stdlib.h"
+#include "button.h"
+
 #include "hardware/gpio.h"
 #include "hardware/structs/ioqspi.h"
 #include "hardware/sync.h"
-#include "button.h"
+#include "pico/stdlib.h"
 
 #define BUTTON_DEBOUNCE_MAX 10
 #define LONGPRESS_US (500 * 1000)

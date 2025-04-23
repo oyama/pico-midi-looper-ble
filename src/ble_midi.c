@@ -12,8 +12,8 @@
  */
 #include <stdio.h>
 
-#include "midi_service.h"
 #include "btstack.h"
+#include "midi_service.h"
 
 // clang-format off
 static uint8_t ble_advertising_data[] = {

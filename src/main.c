@@ -6,6 +6,7 @@
  * - BLE MIDI transmission with real-time user interaction
  * - Supports basic recording, playback, and track switching via a single button
  *
+ *
  * Copyright 2025, Hiroyuki OYAMA
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -31,6 +32,8 @@
 
 #define ANSI_CYAN "\e[36m"
 #define ANSI_MAGENTA "\e[35m"
+#define ANSI_BG_HILITE "\x1b[102m"    // Bright green
+#define ANSI_BOLD_WHITE "\x1b[1;97m"  // Bold + bright white
 #define ANSI_CLEAR "\e[0m"
 
 enum {
@@ -75,10 +78,8 @@ typedef struct {
     uint64_t last_step_time_us;
 } looper_status_t;
 
-static looper_status_t looper_status = {.record_step_count = 0,
-                                        .current_track = 0,
-                                        .current_step = 0,
-                                        .last_step_time_us = 0};
+static looper_status_t looper_status = {
+    .record_step_count = 0, .current_track = 0, .current_step = 0, .last_step_time_us = 0};
 static bool onboard_led_is_on = false;
 
 /*
@@ -119,38 +120,38 @@ void update_status_led(void) {
     cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, onboard_led_is_on);
 }
 
+void print_track(const char *label, const bool *steps, bool is_selected) {
+    printf("%s%-7s [", is_selected ? ">" : " ", label);
+    for (int i = 0; i < TOTAL_STEPS; ++i) {
+        bool is_current = (i == looper_status.current_step);
+        bool note_on = steps[i];
+
+        if (is_current && note_on) {
+            printf("%s%sx%s", ANSI_BG_HILITE, ANSI_BOLD_WHITE, ANSI_CLEAR);
+        } else if (is_current) {
+            printf("%s %s", ANSI_BG_HILITE, ANSI_CLEAR);
+        } else if (note_on) {
+            printf("x");
+        } else {
+            printf(" ");
+        }
+    }
+    printf("]\n");
+}
+
 /*
  * Outputs the step pattern of a given track to stdout for debugging.
  */
-static void print_track(const char *label, bool *track) {
-    printf("%s", label);
-    for (size_t i = 0; i < TOTAL_STEPS; i++) {
-        printf("%s", track[i] ? "x" : " ");
-    }
-    printf("\n");
-}
-
-/*
- * Prints a visual indicator (caret '^') showing the current playback step.
- */
-static void print_step_indicator(const char *label, int step) {
-    printf("%s", label);
-    for (size_t i = 0; i < TOTAL_STEPS; i++) {
-        printf("%s", (size_t)step == i ? "^" : " ");
-    }
-    printf("\n");
-}
-
 static void show_looper_status() {
     bool connection = ble_midi_connection_status();
-    printf("%s (Track %s)\n",
-           (connection ? (looper_status.state == LOOPER_STATE_RECORDING ? ANSI_MAGENTA "Record" ANSI_CLEAR
-                                                                            : ANSI_CYAN "Play" ANSI_CLEAR)
-                       : "Pause"),
-           tracks[looper_status.current_track].name);
-    print_track("Track Buss  ", tracks[0].data);
-    print_track("Track Snare ", tracks[1].data);
-    print_step_indicator("            ", looper_status.current_step);
+    printf("[%s]\n", (connection ? (looper_status.state == LOOPER_STATE_RECORDING
+                                        ? ANSI_MAGENTA "RECORDING" ANSI_CLEAR
+                                        : ANSI_CYAN "PLAYING" ANSI_CLEAR)
+                                 : "PAUSE"));
+    for (uint8_t i = 0; i < NUM_TRACKS; i++) {
+        print_track(tracks[i].name, tracks[i].data, i == looper_status.current_track);
+    }
+    fflush(stdout);
 }
 
 static void send_click_if_needed(void) {
@@ -233,9 +234,10 @@ static void process_looper_state(btstack_timer_source_t *ts) {
             break;
 
         case LOOPER_STATE_TRACK_SWITCH:
-            looper_status.state = LOOPER_STATE_PLAYING;
+            looper_status.current_track = (looper_status.current_track + 1) % NUM_TRACKS;
             send_midi_note(MIDI_CHANNEL_10, RIDE_CYMBAL1, 0x7f);
             advance_sequencer(start_us);
+            looper_status.state = LOOPER_STATE_PLAYING;
             break;
         default:
             break;
