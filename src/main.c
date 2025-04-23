@@ -1,10 +1,7 @@
 /*
- * Pico BLE MIDI Looper
- *
- * A minimal 1-bar loop recorder for drum tracks, using Raspberry Pi Pico W.
- * - Step-based sequencer synchronized to MASTER_BPM
- * - BLE MIDI transmission with real-time user interaction
- * - Supports basic recording, playback, and track switching via a single button
+ * main.c
+ * BLE MIDI looper for Raspberry Pi Pico W.
+ * A minimal 1-bar loop recorder using a single button to record and switch tracks.
  *
  *
  * Copyright 2025, Hiroyuki OYAMA
@@ -48,11 +45,29 @@ enum {
     RIDE_CYMBAL1 = 51,
 };
 
+/* Represents the current playback or recording state. */
+typedef enum {
+    LOOPER_STATE_WAITING = 0,   // BLE not connected, waiting.
+    LOOPER_STATE_PLAYING,       // Playing back loop.
+    LOOPER_STATE_RECORDING,     // One-bar recording in progress.
+    LOOPER_STATE_TRACK_SWITCH,  // Switching to next track.
+} looper_state_t;
+
+/* Holds the current looper runtime status. */
 typedef struct {
-    const char *name;
-    uint8_t note;
-    uint8_t channel;
-    bool data[TOTAL_STEPS];
+    looper_state_t state;        // Current state.
+    uint8_t record_step_count;   // Counter for number of steps recorded.
+    uint8_t current_track;       // Track currently selected.
+    uint8_t current_step;        // Step index in the loop.
+    uint64_t last_step_time_us;  // Time of last step transition.
+} looper_status_t;
+
+/* Represents each MIDI track with note and sequence data. */
+typedef struct {
+    const char *name;        // Human-readable name of the track.
+    uint8_t note;            // MIDI note to trigger.
+    uint8_t channel;         // MIDI channel.
+    bool data[TOTAL_STEPS];  // Sequence data.
 } track_t;
 
 #define NUM_TRACKS 2
@@ -60,23 +75,6 @@ track_t tracks[NUM_TRACKS] = {
     {"Bass", STANDARD_BASS_DRUM, MIDI_CHANNEL_10, {0}},
     {"Snare", STANDARD_SNARE, MIDI_CHANNEL_10, {0}},
 };
-
-// Represents the state of the looper's internal state machine.
-typedef enum {
-    LOOPER_STATE_WAITING = 0,
-    LOOPER_STATE_PLAYING,
-    LOOPER_STATE_RECORDING,
-    LOOPER_STATE_TRACK_SWITCH,
-} looper_state_t;
-
-// Holds the full runtime status of the looper, including current step and track.
-typedef struct {
-    looper_state_t state;
-    uint8_t record_step_count;
-    uint8_t current_track;
-    uint8_t current_step;
-    uint64_t last_step_time_us;
-} looper_status_t;
 
 static looper_status_t looper_status = {
     .record_step_count = 0, .current_track = 0, .current_step = 0, .last_step_time_us = 0};
@@ -89,8 +87,7 @@ static bool onboard_led_is_on = false;
 static inline void set_onboard_led(bool on) { onboard_led_is_on = on; }
 
 /*
- * Sends a MIDI note-on message representing a metronome click.
- * The pitch varies if it's a downbeat (first step in loop).
+ * Sends a MIDI click depending on current step.
  */
 static void send_midi_click(bool accent) {
     send_midi_note(MIDI_CHANNEL_1, SIDE_STICK, accent ? 0x5f : 0x20);
@@ -100,7 +97,7 @@ static void send_midi_click(bool accent) {
  * Manages LED blinking when in WAITING state (BLE disconnected).
  * Otherwise turns LED on/off depending on current playback state.
  */
-void update_status_led(void) {
+static void update_status_led(void) {
     if (!ble_midi_connection_status()) {
         // If there is no BLE connection, the LED will blink to indicate "PAUSE" status
         static absolute_time_t next_toggle_time;
@@ -120,7 +117,7 @@ void update_status_led(void) {
     cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, onboard_led_is_on);
 }
 
-void print_track(const char *label, const bool *steps, bool is_selected) {
+static void print_track(const char *label, const bool *steps, bool is_selected) {
     printf("%s%-7s [", is_selected ? ">" : " ", label);
     for (int i = 0; i < TOTAL_STEPS; ++i) {
         bool is_current = (i == looper_status.current_step);
@@ -139,9 +136,7 @@ void print_track(const char *label, const bool *steps, bool is_selected) {
     printf("]\n");
 }
 
-/*
- * Outputs the step pattern of a given track to stdout for debugging.
- */
+/* Displays the looper's playback state and track data over serial terminal. */
 static void show_looper_status() {
     bool connection = ble_midi_connection_status();
     printf("[%s]\n", (connection ? (looper_status.state == LOOPER_STATE_RECORDING
@@ -154,6 +149,7 @@ static void show_looper_status() {
     fflush(stdout);
 }
 
+/* Sends a MIDI click at specific steps to indicate rhythm. */
 static void send_click_if_needed(void) {
     if ((looper_status.current_step % CLICK_DIVISION) == 0) {
         send_midi_click(looper_status.current_step == 0);
@@ -183,21 +179,20 @@ static void play_looper_notes_recording(void) {
     }
 }
 
+/* Updates the current step index and timestamp based on current loop progress. */
 static void advance_sequencer(uint64_t now_us) {
     looper_status.last_step_time_us = now_us;
     looper_status.current_step = (looper_status.current_step + 1) % TOTAL_STEPS;
 }
 
+/* Re-arms the timer to fire again after STEP_MS, adjusting for processing time. */
 static void reset_interval_timer(btstack_timer_source_t *ts, uint64_t start_us) {
     uint64_t handler_delay_ms = (time_us_64() - start_us) / 1000;
     btstack_run_loop_set_timer(ts, STEP_MS - handler_delay_ms);
     btstack_run_loop_add_timer(ts);
 }
 
-/*
- * Main timing handler called every STEP_MS milliseconds.
- * Updates playback position, triggers MIDI output, handles recording and track switching.
- */
+/* Processes the looper's main state machine, called by the step timer. */
 static void process_looper_state(btstack_timer_source_t *ts) {
     uint64_t start_us = time_us_64();
     bool connection = ble_midi_connection_status();
