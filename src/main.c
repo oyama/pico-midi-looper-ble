@@ -6,6 +6,7 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -90,7 +91,7 @@ static inline void set_onboard_led(bool on) { onboard_led_is_on = on; }
 
 // Sends a click sound at key steps
 static void send_midi_click(bool accent) {
-    send_midi_note(MIDI_CHANNEL_1, CLOSED_HIHAT, accent ? 0x7f : 0x5f);
+    send_midi_note(MIDI_CHANNEL_1, CLOSED_HIHAT, accent ? 0x5f : 0x5f);
 }
 
 /*
@@ -195,7 +196,7 @@ static void reset_interval_timer(btstack_timer_source_t *ts, uint64_t start_us) 
 static uint8_t get_quantized_step_from_time() {
     int64_t delta_us = looper_status.timing.press_start_us - looper_status.timing.last_step_time_us;
     // Convert to step offset using rounding (nearest step)
-    int32_t relative_steps = (delta_us + (STEP_MS * 500)) / 1000 / STEP_MS;
+    int32_t relative_steps = (int32_t)round((double)delta_us / 1000.0 / STEP_MS);
     uint8_t previous_step = (looper_status.current_step + TOTAL_STEPS - 1) % TOTAL_STEPS;
     uint8_t estimated_step = (previous_step + relative_steps + TOTAL_STEPS) % TOTAL_STEPS;
     return estimated_step;
