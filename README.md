@@ -15,6 +15,13 @@ This project is designed to serve as:
 
 [![Watch the Demo](https://img.youtube.com/vi/biRl0yx8jz4/0.jpg)](https://www.youtube.com/watch?v=biRl0yx8jz4)
 
+## Getting Started with GarageBand
+
+Want to try it out on your iPhone?
+
+Check out our step-by-step guide for connecting the Pico MIDI Looper to **GarageBand via Bluetooth MIDI**:  
+👉 [Getting Started with GarageBand on iPhone](docs/getting-started-with-garageband.md)
+
 ## Features
 
 - Runs standalone on a Raspberry Pi Pico W
