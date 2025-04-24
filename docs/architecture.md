@@ -13,7 +13,7 @@ The Pico MIDI Looper is a BLE-MIDI-based loop recorder for Raspberry Pi Pico W. 
 
 The firmware uses a simple FSM to manage user interaction and playback behavior. The four defined states are illustrated in the following diagram:
 
-![Looper FSM](docs/looper_fsm.svg)
+![Looper FSM](looper_fsm.svg)
 
 - **Waiting**: Initial idle state before BLE connection is established.
 - **Playing**: Default playback state, running the sequencer.
