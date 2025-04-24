@@ -1,73 +1,93 @@
 # Pico MIDI Looper
+
 ![Build Firmware](https://github.com/oyama/pico-midi-looper/actions/workflows/build-firmware.yml/badge.svg)
 
-Make beats fly from a $6 microcontroller.
-Pico MIDI Looper turns your [Raspberry Pi Pico W](https://www.raspberrypi.com/products/raspberry-pi-pico/) into a one-button wireless rhythm looper.
-With just the single onboard button, you can record and play back a one-bar rhythm loop consisting of kick and snare tracks. The loop is transmitted over [MIDI
-over Bluetooth Low Energy](https://midi.org/midi-over-bluetooth-low-energy-ble-midi)(BLE-MIDI) in real time and can be played by software instruments on smartphones or PCs that support BLE-MIDI.
-This project is designed to serve as:
+A minimal 1-bar drum looper for Raspberry Pi Pico W using MIDI over Bluetooth Low Energy(BLE-MIDI).
+It lets you record and play rhythms using a single button, making it perfect for workshops, prototyping, and creative experiments.
 
-- A template for BLE-MIDI output in physical computing and electronics projects
-- An inexpensive and accessible learning material for workshops and education
-- A toolbox component for experimental or artistic sound-based expression
-
-## Demo Video
-
-[![Watch the Demo](https://img.youtube.com/vi/biRl0yx8jz4/0.jpg)](https://www.youtube.com/watch?v=biRl0yx8jz4)
-
-## Getting Started with GarageBand
-
-Want to try it out on your iPhone?
-
-Check out our step-by-step guide for connecting the Pico MIDI Looper to **GarageBand via Bluetooth MIDI**:  
-👉 [Getting Started with GarageBand on iPhone](docs/getting-started-with-garageband.md)
+[![YouTube Demo](https://img.youtube.com/vi/biRl0yx8jz4/0.jpg)](https://www.youtube.com/watch?v=biRl0yx8jz4)
 
 ## Features
 
-- Runs standalone on a Raspberry Pi Pico W
-- Single-button operation using the onboard switch
-  - Short press: Input kick or snare
-  - Long press: Switch between tracks
-- LED feedback visualizes recorded rhythms
-- MIDI notes are used to notify track switching
-- Two tracks: kick and snare
-- One-bar looping at a fixed tempo (e.g., 120 BPM)
-- Wireless MIDI transmission via BLE-MIDI
+- BLE-MIDI compatible (works with GarageBand, DAWs, and synth apps)
+- 1-bar loop (16 steps: 4 beats × 4 subdivisions)
+- Two tracks: bass drum and snare
+- Quantized note input
+- LED feedback for step visualization
+- Single-button control with expressive timing
+- Designed for education, installations, and minimalist instruments
 
-## State Diagram
+## How It Works
 
-The looper operates as a simple finite state machine with four main states:
+You build up your loop by switching between two tracks and entering notes step by step.
+Once powered on, the looper is ready to use.
+All interaction is handled via a single button. The length of your press determines the action.
 
-- **WAITING**: BLE not connected
-- **PLAYING**: Loop is playing, can trigger sounds
-- **RECORDING**: Short press begins recording a 1-bar loop
-- **TRACK SWITCH**: Long press switches to the next track
+### Button Actions
 
-![Looper FSM](docs/looper_fsm.svg)
+| Action             | Description                                            |
+|--------------------|--------------------------------------------------------|
+| **Short Press**    | Starts recording and plays a note on the current track |
+|                    | Automatically switches to playback mode after one bar  |
+| **Long Press**     | Switches to the other track (open hi-hat cue sound)    |
 
+### Tracks and Sounds
 
-## Installation
+| Function            | MIDI Note / Sound              |
+|---------------------|--------------------------------|
+| Track 1 (Bass Drum) | Note 36 (commonly shown as C1) |
+| Track 2 (Snare Drum)| Note 38 (commonly shown as D1) |
+| Metronome Click     | Note 42 (Closed Hi-Hat)        |
+| Track Switch Cue    | Note 46 (Open Hi-Hat)          |
 
-You can either build the firmware yourself or download a prebuilt version:
+- Notes are automatically quantized to 1/16th-note steps.
+- Recording only affects the currently selected track.
 
-### Option 1: Build from source
+## Getting Started
 
-This project uses **pico-sdk** for building. Please follow the instructions in [Getting Started with Raspberry Pi Pico](https://datasheets.raspberrypi.com/pico/getting-started-with-pico.pdf) to set up your development environment in advance.
+### Flash the Firmware
+
+You can either download a prebuilt `.uf2` from the [Releases](https://github.com/oyama/pico-midi-looper/releases/latest) page, or build it yourself.
+
+To flash the firmware:
+
+1. Hold the `BOOTSEL` button while connecting your Pico W via USB.
+2. Copy the `pico-midi-looper.uf2` file onto the mounted USB drive.
+3. The device will reboot and start running the looper.
+
+### Connect via BLE-MIDI
+
+1. Open a BLE-MIDI compatible app (e.g., GarageBand on iOS).
+2. Look for `Pico` and connect to it.
+3. Start recording and playing right away.
+
+For detailed instructions on iOS, see
+[Getting Started with GarageBand on iPhone](docs/getting-started-with-garageband.md)
+
+## Building from Source
+
+This project uses the [pico-sdk](https://github.com/raspberrypi/pico-sdk).
+Refer to the official guide, [Getting Started with Raspberry Pi Pico](https://datasheets.raspberrypi.com/pico/getting-started-with-pico.pdf), to set up your development environment.
+
+Once ready:
 
 ```bash
 git clone https://github.com/oyama/pico-midi-looper.git
 cd pico-midi-looper
-
-mkdir build; cd build;
+mkdir build && cd build
 PICO_SDK_PATH=/path/to/pico-sdk cmake .. -DPICO_BOARD=pico_w
 make
 ```
+This will produce `pico-midi-looper.uf2` in the `build/` directory.
 
-After a successful build, drag and drop the generated `pico-midi-looper.uf2` file onto your Pico W while it's connected in `BOOTSEL` mode to complete installation.
+## Architecture
 
-### Option 2: Download prebuilt firmware
+The looper is implemented as a simple finite state machine:
 
-Download the latest prebuilt firmware from the [latest GitHub release](https://github.com/oyama/pico-midi-looper/releases/latest) and install it in the same way.
+`Waiting / Recording / Playing / TrackSwitch`
+
+Each transition is triggered by intuitive user input.
+The core logic fits in under 300 lines of code and is designed to be easy to read and modify — ideal for use in education or interactive art.
 
 ## License
 
@@ -76,10 +96,9 @@ This project is licensed under the 3-Clause BSD License. For details, see the [L
 ## Contributing
 
 Simplicity is at the heart of this project.
-We welcome pull requests and issues that help refine the code or improve the user experience —while keeping things minimal.
+We welcome pull requests and issues that help refine the code or enhance the user experience — while keeping things minimal and readable.
 Feel free to fork the project and adapt it to your own creative or educational needs.
 We’d love to see how you build upon this tiny MIDI machine.
 
----
-Made with love in Japan.  
+Made with love in Japan.
 We hope you enjoy building with it as much as we did.
