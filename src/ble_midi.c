@@ -10,8 +10,6 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#include <stdio.h>
-
 #include "btstack.h"
 #include "midi_service.h"
 
@@ -80,13 +78,10 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
             uint8_t subevent = hci_event_le_meta_get_subevent_code(packet);
             if (subevent == HCI_SUBEVENT_LE_CONNECTION_COMPLETE) {
                 con_handle = hci_subevent_le_connection_complete_get_connection_handle(packet);
-                printf("[BLE] Connection established, handle: 0x%04x\n", con_handle);
             }
             break;
         case HCI_EVENT_DISCONNECTION_COMPLETE:
             con_handle = HCI_CON_HANDLE_INVALID;
-            printf("[BLE] Disconnected, handle: 0x%04x\n",
-                   hci_event_disconnection_complete_get_connection_handle(packet));
             break;
         default:
             break;
