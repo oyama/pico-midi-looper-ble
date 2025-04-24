@@ -89,7 +89,8 @@ The looper is implemented as a simple finite state machine:
 Each transition is triggered by intuitive user input.
 The core logic fits in under 300 lines of code and is designed to be easy to read and modify — ideal for use in education or interactive art.
 
-➡️ For the full state diagram, see: [docs/looper_fsm.svg](docs/looper_fsm.svg)
+For detailed documentation, see:
+[docs/architecture.md](docs/architecture.md)
 
 ## License
 
