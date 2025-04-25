@@ -27,11 +27,11 @@ State transitions are triggered by BLE connection events and button presses. The
 The sequencer operates at a fixed rate derived from BPM:
 
 ```c
-#define STEP_MS (60000 / (MASTER_BPM * STEPS_PER_BEAT))
+#define LOOPER_STEP_DURATION_MS (60000 / (LOOPER_BPM * LOOPER_STEPS_PER_BEAT))
 ```
 
 - Each loop consists of 16 steps (4 beats x 4 subdivisions).
-- A timer (btstack run loop timer) triggers every STEP\_MS.
+- A timer (btstack run loop timer) triggers every LOOPER\_STEP\_DURATION\_MS.
 - On each tick, the looper updates the current step, outputs any matching notes, and transitions state if necessary.
 
 ## Button Handling

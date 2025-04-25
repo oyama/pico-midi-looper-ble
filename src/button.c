@@ -16,13 +16,13 @@
 #include "hardware/sync.h"
 #include "pico/stdlib.h"
 
-#define BUTTON_DEBOUNCE_MAX 10
-#define LONGPRESS_US (500 * 1000)
+#define BUTTON_DEBOUNCE_COUNT 10             // consecutive reads needed for stable state
+#define LONG_PRESS_DURATION_US (500 * 1000)  // 500 ms
 
 typedef enum {
     BUTTON_STATE_IDLE = 0,
     BUTTON_STATE_PRESSED,
-    BUTTON_STATE_LONGPRESS_ACTIVE
+    BUTTON_STATE_LONG_PRESS_ACTIVE
 } button_state_t;
 
 typedef struct {
@@ -30,7 +30,7 @@ typedef struct {
     uint64_t press_start_us;
 } button_fsm_t;
 
-bool __no_inline_not_in_flash_func(get_bootsel_button)(void) {
+static bool __no_inline_not_in_flash_func(bootsel_button_debounce)(void) {
     static uint8_t counter = 0;
     static bool stable_state = false;
     const uint CS_PIN_INDEX = 1;
@@ -48,25 +48,27 @@ bool __no_inline_not_in_flash_func(get_bootsel_button)(void) {
 
     // debounce
     if (button_state) {
-        if (counter < BUTTON_DEBOUNCE_MAX)
+        if (counter < BUTTON_DEBOUNCE_COUNT)
             counter++;
     } else {
         if (counter > 0)
             counter--;
     }
 
-    stable_state = (counter == BUTTON_DEBOUNCE_MAX) ? true : (counter == 0) ? false : stable_state;
+    stable_state = (counter == BUTTON_DEBOUNCE_COUNT) ? true
+                   : (counter == 0)                   ? false
+                                                      : stable_state;
     return stable_state;
 }
 
 /*
- * Reads the current physical button state and returns the corresponding logical event.
+ * Reads BOOTSEL button state and returns a button_event_t (see button.h).
  * Maintains internal FSM to distinguish short press, long press, and release.
  */
-button_event_t poll_button_event(void) {
+button_event_t button_pool_event(void) {
     static button_fsm_t fsm = {0};
     button_event_t ev = BUTTON_EVENT_NONE;
-    bool current_down = get_bootsel_button();
+    bool current_down = bootsel_button_debounce();
     uint64_t now_us = time_us_64();
 
     switch (fsm.state) {
@@ -82,13 +84,13 @@ button_event_t poll_button_event(void) {
             if (!current_down) {
                 fsm.state = BUTTON_STATE_IDLE;
                 ev = BUTTON_EVENT_SHORT_PRESS_RELEASE;
-            } else if (now_us - fsm.press_start_us > LONGPRESS_US) {
-                fsm.state = BUTTON_STATE_LONGPRESS_ACTIVE;
+            } else if (now_us - fsm.press_start_us > LONG_PRESS_DURATION_US) {
+                fsm.state = BUTTON_STATE_LONG_PRESS_ACTIVE;
                 ev = BUTTON_EVENT_LONG_PRESS_BEGIN;
             }
             break;
 
-        case BUTTON_STATE_LONGPRESS_ACTIVE:
+        case BUTTON_STATE_LONG_PRESS_ACTIVE:
             if (!current_down) {
                 fsm.state = BUTTON_STATE_IDLE;
                 ev = BUTTON_EVENT_LONG_PRESS_RELEASE;

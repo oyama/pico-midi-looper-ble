@@ -9,6 +9,6 @@
 
 void ble_midi_init(void (*step_cb)(btstack_timer_source_t *ts), uint32_t step_period_ms);
 
-bool ble_midi_connection_status(void);
+bool ble_midi_is_connected(void);
 
 void send_midi_note(uint8_t channel, uint8_t note, uint8_t velocity);
