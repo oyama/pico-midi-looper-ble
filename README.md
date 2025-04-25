@@ -3,7 +3,7 @@
 [![Build](https://github.com/oyama/pico-midi-looper/actions/workflows/build-firmware.yml/badge.svg)](https://github.com/oyama/pico-midi-looper/actions)
 
 A minimal 2-bars drum looper for Raspberry Pi Pico W that speaks Bluetooth Low-Energy MIDI (BLE-MIDI).
-Build a palm-sized looper in under 10 minutes —ideal for workshops, prototyping, or live-coding sets.
+Build a thumb-sized looper in under 5 minutes —ideal for workshops, prototyping, or live-coding sets.
 Record and play back grooves with nothing but the built-in `BOOTSEL` button.
 
 [![YouTube Demo](https://img.youtube.com/vi/biRl0yx8jz4/0.jpg)](https://www.youtube.com/watch?v=biRl0yx8jz4)
@@ -59,9 +59,9 @@ All interaction is handled via a single button. The length of your press determi
 
 | Action                 | Hold-time |  Result                                                                               |
 |------------------------|-----------|---------------------------------------------------------------------------------------|
-| **Short Press**        | < 0.5 s   | Records a note on the current track. Automatically returns to playback after two bars |
-| **Long Press**         | ≥ 0.5 s  | Switches to the next track (hand-clap cue)                                            |
-| **Very-Long Press**    | ≥ 2 s    | Enters **Tap-tempo** mode. Long Press again (≥0.5 s) to confirm the tempo and return to Playing mode.|
+| **Click**        | < 0.5 s   | Records a note on the current track. Automatically returns to playback after two bars |
+| **Press**         | ≥ 0.5 s  | Switches to the next track (hand-clap cue)                                            |
+| **Long Press**    | ≥ 2 s    | Enters **Tap-tempo** mode. Long Press again (≥0.5 s) to confirm the tempo and return to Playing mode.|
 
 ### Tracks and Sounds
 
