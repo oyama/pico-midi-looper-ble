@@ -3,8 +3,8 @@
  *
  * Tap-tempo detection and BPM estimation.
  *
- * ENTER : VERY_LONG_PRESS_RELEASE (≥ 3 s)
- * EXIT : LONG_PRESS_RELEASE (≥ 1 s)
+ * ENTER : BUTTON_EVENT_LONG_HOLD_RELEASE (≥ 2 s)
+ * EXIT : BUTTON_EVENT_HOLD_RELEASE (≥ 0.5 s)
  * Resets after 2 s inactivity or after 4 taps.
  *
  * Copyright 2025, Hiroyuki OYAMA
@@ -22,7 +22,7 @@ enum {
     TAP_MIN_BPM = 40,  // clamp lower bound
     TAP_MAX_BPM = 240,
     TAP_MAX_TAPS = 4,
-    TIMEOUT_US = 1500 * 1000,
+    TIMEOUT_US = 1500 * 1000,  // 1.5 s idle-timeout
 };
 
 typedef enum { TT_IDLE, TT_COLLECT } tt_state_t;
