@@ -21,6 +21,6 @@ Connect your Pico W (with the [Pico MIDI Looper firmware](https://github.com/oya
 4. When prompted with _"Allow GarageBand to find Bluetooth devices?"_, tap **Allow** to grant permission.![IMG_5082-landscape](https://github.com/user-attachments/assets/55bc73c5-8234-4a11-8b6d-ca518312ba5f)
 5. In the list of available devices, tap on Pico to connect.![IMG_5083-landscape](https://github.com/user-attachments/assets/24cff487-72d0-4020-ace5-71b84237f2fe)
 
-When you hear the hi-hat click sound, you're ready to go. Press the button on your Pico and let your rhythm come to life!
+When you hear the click sound, you're ready to go. Press the button on your Pico and let your rhythm come to life!
 
 > ⚠️ Note: Wireless earphones introduce noticeable latency, which makes them unsuitable for live rhythm performance. For the best experience, use the device’s built-in speaker or wired headphones.
