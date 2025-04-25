@@ -4,14 +4,16 @@ This document describes the internal architecture of the Pico MIDI Looper firmwa
 
 ## Overview
 
-The Pico MIDI Looper is a BLE-MIDI-based loop recorder for Raspberry Pi Pico W. It records and plays back a single-bar loop consisting of two drum tracks (bass and snare), using a single button to control recording and track switching. Internally, the system is organized around two central mechanisms:
+The Pico MIDI Looper is a BLE-MIDI-based loop recorder for Raspberry Pi Pico W.
+It records and plays back a two-bar loop (32 steps) consisting of two drum tracks … In addition to recording, a tap-tempo mode lets you adjust the global BPM on the fly with the same single button.
+Internally, the system is organized around two central mechanisms:
 
 1. A **finite state machine (FSM)** governing the overall looper state
 2. A **timer-driven sequencer** that drives the step clock and MIDI note output
 
 ## Looper State Machine
 
-The firmware uses a simple FSM to manage user interaction and playback behavior. The four defined states are illustrated in the following diagram:
+The firmware centres around a main FSM with five states: `Waiting / Playing / Recording / TrackSwitch / TapTempo`. The updated diagram reflects this.
 
 ![Looper FSM](looper_fsm.svg)
 
@@ -19,18 +21,22 @@ The firmware uses a simple FSM to manage user interaction and playback behavior.
 - **Playing**: Default playback state, running the sequencer.
 - **Recording**: Temporarily active while recording note input for 1 bar.
 - **TrackSwitch**: Transition state when switching between drum tracks.
+- **TapTempo**: temporary mode for tap-tempo BPM entry.
+
 
 State transitions are triggered by BLE connection events and button presses. The state machine is evaluated on every step clock tick within the main loop logic.
 
 ## Sequencer Timing
 
-The sequencer operates at a fixed rate derived from BPM:
+The sequencer timer period is re-computed whenever the global BPM changes(e.g. after tap-tempo):
 
 ```c
-#define LOOPER_STEP_DURATION_MS (60000 / (LOOPER_BPM * LOOPER_STEPS_PER_BEAT))
+/* updated every time looper_update_bpm() is called */
+looper_status.step_duration_ms = 60000 / (current_bpm * LOOPER_STEPS_PER_BEAT);
+btstack_run_loop_set_timer(&step_timer, looper_status.step_duration_ms);
 ```
 
-- Each loop consists of 16 steps (4 beats x 4 subdivisions).
+- Each loop consists of 32 steps (4 beats × 4 subdivisions × 2 bars).
 - A timer (btstack run loop timer) triggers every LOOPER\_STEP\_DURATION\_MS.
 - On each tick, the looper updates the current step, outputs any matching notes, and transitions state if necessary.
 
@@ -42,11 +48,13 @@ An internal FSM (in `button.c`) detects three types of user actions:
 - `BUTTON_EVENT_DOWN`
 - `BUTTON_EVENT_SHORT_PRESS_RELEASE`
 - `BUTTON_EVENT_LONG_PRESS_RELEASE`
+- `BUTTON_EVENT_VERY_LONG_PRESS_BEGIN`
 
 These events are interpreted by the looper (in `main.c`) depending on its current state:
 
 - **Short Press**: Starts recording, and toggles a note at the quantized step.
-- **Long Press**: Switches to the next track.
+- **Long Press(≥ 0.5 s)**: Switches to the next track.
+- **Very-long press (≥2 s)**: enters Tap-tempo mode from Playing. Inside Tap-tempo a ≥0.5 s long-press confirms the BPM and returns to Playing.
 
 ## Track Structure
 
@@ -75,8 +83,7 @@ The BLE connection status is monitored and used to gate playback and visual LED 
 
 ## Design Goals
 
-- **Minimalism**: Core logic in under 300 lines of C
+- **Minimalism**: Core logic in under 400 lines of C
 - **Readability**: Clear structure and FSM-based design
 - **Extensibility**: Easy to add new tracks, note types, or input methods
 - **Educational Value**: Suitable for workshops and experimentation
-

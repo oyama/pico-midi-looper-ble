@@ -14,16 +14,15 @@
 #include "button.h"
 #include "pico/cyw43_arch.h"
 #include "pico/stdlib.h"
+#include "tap_tempo.h"
 
-#define LOOPER_BPM 120           // Beats per minute (global tempo)
-#define LOOPER_BARS 1            // Loop length in bars
+#define LOOPER_DEFAULT_BPM 120   // Beats per minute (global tempo)
+#define LOOPER_BARS 2            // Loop length in bars
 #define LOOPER_BEATS_PER_BAR 4   // Time signature numerator (e.g., 4/4)
 #define LOOPER_STEPS_PER_BEAT 4  // Resolution (4 = 16th notes)
 
 #define LOOPER_TOTAL_STEPS (LOOPER_STEPS_PER_BEAT * LOOPER_BEATS_PER_BAR * LOOPER_BARS)
-// milliseconds per sequencer step (= 60 000 / (LOOPER_BPM × LOOPER_STEPS_PER_BEAT))
-#define LOOPER_STEP_DURATION_MS (60000 / (LOOPER_BPM * LOOPER_STEPS_PER_BEAT))
-#define LOOPER_CLICK_DIV (LOOPER_TOTAL_STEPS / LOOPER_STEPS_PER_BEAT)
+#define LOOPER_CLICK_DIV (LOOPER_TOTAL_STEPS / LOOPER_BARS / LOOPER_STEPS_PER_BEAT )
 
 #define ANSI_BG_HILITE "\x1b[47m"
 #define ANSI_CLEAR "\x1b[0m"
@@ -46,6 +45,7 @@ typedef enum {
     LOOPER_STATE_PLAYING,       // Playing back loop.
     LOOPER_STATE_RECORDING,     // One-bar recording in progress.
     LOOPER_STATE_TRACK_SWITCH,  // Switching to next track.
+    LOOPER_STATE_TAP_TEMPO,
 } looper_state_t;
 
 typedef struct {
@@ -58,6 +58,8 @@ typedef struct {
  * Holds track index, current step, recording progress, and last tick time.
  */
 typedef struct {
+    uint32_t bpm;
+    uint32_t step_duration_ms;
     looper_state_t state;          // Current looper mode (e.g. PLAYING, RECORDING).
     uint8_t current_track;         // Index of the active track (for recording or preview).
     uint8_t current_step;          // Index of the current step in the sequence loop.
@@ -74,7 +76,7 @@ typedef struct {
     bool undo_pattern[LOOPER_TOTAL_STEPS];  // Backup for undoing modifications
 } track_t;
 
-static looper_status_t looper_status = {.state = LOOPER_STATE_WAITING};
+static looper_status_t looper_status = {.bpm = LOOPER_DEFAULT_BPM, .state = LOOPER_STATE_WAITING};
 
 #define NUM_TRACKS 2
 static track_t tracks[NUM_TRACKS] = {
@@ -89,6 +91,11 @@ static bool status_led_on = false;
  * Used for indicating the active track or recording.
  */
 static inline void looper_set_status_led(bool on) { status_led_on = on; }
+
+static void looper_update_bpm(uint32_t bpm) {
+    looper_status.bpm = bpm;
+    looper_status.step_duration_ms = 60000 / (bpm * LOOPER_STEPS_PER_BEAT);
+}
 
 // Sends a click/hi-hat; TODO: vary velocity when accent=true
 static void send_midi_click(bool accent) {
@@ -138,9 +145,23 @@ static void print_track(const char *label, const bool *steps, bool is_selected) 
 static void show_looper_status() {
     bool connection = ble_midi_is_connected();
     printf("[BLE %s]\n", connection ? "CONNECTED" : "WAITING");
-    const char *state_label =
-        (connection ? (looper_status.state == LOOPER_STATE_RECORDING ? "RECORDING" : "PLAYING")
-                    : "PAUSE");
+    const char *state_label = "PAUSE";
+    if (connection) {
+        switch (looper_status.state) {
+            case LOOPER_STATE_PLAYING:
+                state_label = "PLAYING";
+                break;
+            case LOOPER_STATE_RECORDING:
+                state_label = "RECORDING";
+                break;
+            case LOOPER_STATE_TAP_TEMPO:
+                state_label = "TAP TEMPO";
+                break;
+            default:
+                break;
+        }
+    }
+
     printf("[%s]\n", state_label);
     for (uint8_t i = 0; i < NUM_TRACKS; i++)
         print_track(tracks[i].name, tracks[i].pattern, i == looper_status.current_track);
@@ -186,9 +207,9 @@ static void looper_next_step(uint64_t now_us) {
 // Re-arms the timer to fire again after LOOPER_STEP_DURATION_MS, adjusting for processing time.
 static void looper_reset_step_timer(btstack_timer_source_t *ts, uint64_t start_us) {
     uint64_t handler_delay_ms = (time_us_64() - start_us) / 1000;
-    uint32_t delay = (handler_delay_ms >= LOOPER_STEP_DURATION_MS)
+    uint32_t delay = (handler_delay_ms >= looper_status.step_duration_ms)
                          ? 1
-                         : LOOPER_STEP_DURATION_MS - handler_delay_ms;
+                         : looper_status.step_duration_ms - handler_delay_ms;
     btstack_run_loop_set_timer(ts, delay);
     btstack_run_loop_add_timer(ts);
 }
@@ -201,7 +222,8 @@ static uint8_t looper_quantize_step() {
     int64_t delta_us =
         looper_status.timing.button_press_start_us - looper_status.timing.last_step_time_us;
     // Convert to step offset using rounding (nearest step)
-    int32_t relative_steps = (int32_t)round((double)delta_us / 1000.0 / LOOPER_STEP_DURATION_MS);
+    int32_t relative_steps =
+        (int32_t)round((double)delta_us / 1000.0 / looper_status.step_duration_ms);
     uint8_t previous_step =
         (looper_status.current_step + LOOPER_TOTAL_STEPS - 1) % LOOPER_TOTAL_STEPS;
     uint8_t estimated_step =
@@ -247,6 +269,13 @@ static void looper_process_state(btstack_timer_source_t *ts) {
             looper_next_step(start_us);
             looper_status.state = LOOPER_STATE_PLAYING;
             break;
+        case LOOPER_STATE_TAP_TEMPO:
+            if (!connection)
+                looper_status.state = LOOPER_STATE_WAITING;
+            send_click_if_needed();
+            looper_set_status_led((looper_status.current_step % LOOPER_CLICK_DIV) == 0);
+            looper_next_step(start_us);
+            break;
         default:
             break;
     }
@@ -262,7 +291,10 @@ static void looper_process_state(btstack_timer_source_t *ts) {
  *
  * Event constants are defined in button.c (see button_event_t).
  */
-static void handle_button_event(button_event_t event) {
+static void looper_handle_button_event(button_event_t event) {
+    if (looper_status.state == LOOPER_STATE_TAP_TEMPO)
+        return;
+
     track_t *track = &tracks[looper_status.current_track];
     switch (event) {
         case BUTTON_EVENT_DOWN:
@@ -292,14 +324,56 @@ static void handle_button_event(button_event_t event) {
     }
 }
 
+/*
+ * Routes button events related to tap-tempo mode.
+ *  – PLAYING + very-long release → enter TAP_TEMPO.
+ *  – While in TAP_TEMPO: forward to sub-FSM; update BPM or exit.
+ *  – Ignored in WAITING / RECORDING / TRACK_SWITCH.
+ */
+static void taptempo_handle_button_event(button_event_t event) {
+    if (looper_status.state == LOOPER_STATE_WAITING ||
+        looper_status.state == LOOPER_STATE_RECORDING ||
+        looper_status.state == LOOPER_STATE_TRACK_SWITCH) {
+        return;
+    }
+
+    switch (event) {
+        case BUTTON_EVENT_VERY_LONG_PRESS_BEGIN:
+            looper_status.state = LOOPER_STATE_TAP_TEMPO;
+            send_midi_note(MIDI_CHANNEL_10, OPEN_HIHAT, 0x7f);
+            taptempo_handle_event(event);
+            break;
+        default:
+            if (looper_status.state != LOOPER_STATE_TAP_TEMPO)
+                return;
+
+            switch (taptempo_handle_event(event)) {
+                case TAP_PRELIM:
+                case TAP_FINAL:
+                    looper_update_bpm(taptempo_get_bpm());
+                    break;
+                case TAP_EXIT: /* leave mode */
+                    looper_status.state = LOOPER_STATE_PLAYING;
+                    break;
+                case TAP_NONE:
+                default:
+                    break;
+            }
+    }
+    return;
+}
+
 int main(void) {
     stdio_init_all();
     cyw43_arch_init();
-    ble_midi_init(looper_process_state, LOOPER_STEP_DURATION_MS);
+    looper_update_bpm(LOOPER_DEFAULT_BPM);
+
+    ble_midi_init(looper_process_state, looper_status.step_duration_ms);
     printf("[MAIN] BLE MIDI Looper start\n");
     while (true) {
         button_event_t button_event = button_poll_event();
-        handle_button_event(button_event);
+        taptempo_handle_button_event(button_event);
+        looper_handle_button_event(button_event);
         looper_update_status_led();
     }
     return 0;

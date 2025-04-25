@@ -13,6 +13,8 @@ typedef enum {
     BUTTON_EVENT_SHORT_PRESS_RELEASE,
     BUTTON_EVENT_LONG_PRESS_BEGIN,
     BUTTON_EVENT_LONG_PRESS_RELEASE,
+    BUTTON_EVENT_VERY_LONG_PRESS_BEGIN,
+    BUTTON_EVENT_VERY_LONG_PRESS_RELEASE
 } button_event_t;
 
 bool __no_inline_not_in_flash_func(bb_get_bootsel_button)();

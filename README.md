@@ -2,7 +2,7 @@
 
 [![Build](https://github.com/oyama/pico-midi-looper/actions/workflows/build-firmware.yml/badge.svg)](https://github.com/oyama/pico-midi-looper/actions)
 
-A minimal 1-bar drum looper for Raspberry Pi Pico W that speaks Bluetooth Low-Energy MIDI (BLE-MIDI).
+A minimal 2-bar drum looper for Raspberry Pi Pico W that speaks Bluetooth Low-Energy MIDI (BLE-MIDI).
 Build a palm-sized looper in under 10 minutes —ideal for workshops, prototyping, or live-coding sets.
 Record and play back grooves with nothing but the built-in `BOOTSEL` button.
 
@@ -19,8 +19,9 @@ Record and play back grooves with nothing but the built-in `BOOTSEL` button.
 ## Features
 
 - BLE-MIDI compatible (works with GarageBand, DAWs, and synth apps)
-- 1-bar loop (16 steps: 4 beats × 4 subdivisions)
+- 2-bar loop (32 steps: 4 beats x 4 subdivisions x 2 bars)
 - Two tracks: bass drum and snare
+- Tap-tempo: set the global BPM with 2-4 taps on the same button
 - Quantized note input
 - LED feedback for step visualization
 - Single-button control with expressive timing
@@ -55,11 +56,11 @@ All interaction is handled via a single button. The length of your press determi
 
 ### Button Actions
 
-| Action             | Description                                            |
-|--------------------|--------------------------------------------------------|
-| **Short Press**    | Starts recording and plays a note on the current track |
-|                    | Automatically switches to playback mode after one bar  |
-| **Long Press**     | Switches to the other track (open hi-hat cue sound)    |
+| Action                 | Hold-time |  Result                                                                               |
+|------------------------|-----------|---------------------------------------------------------------------------------------|
+| **Short Press**        | < 0.5 s   | Records a note on the current track. Automatically returns to playback after two bars |
+| **Long Press**         | ≥ 0.5 s  | Switches to the other track (open-hihat cue)                                          |
+| **Very-Long Press**    | ≥ 2 s    | Enters **Tap-tempo** mode. Long Press again (≥0.5 s) to confirm the tempo and return to Playing mode.|
 
 ### Tracks and Sounds
 
@@ -91,12 +92,7 @@ This will produce `pico-midi-looper.uf2` in the `build/` directory.
 
 ## Architecture
 
-The looper is implemented as a simple finite state machine:
-
-`Waiting / Recording / Playing / TrackSwitch`
-
-Each transition is triggered by intuitive user input.
-The core logic fits in under 300 lines of code and is designed to be easy to read and modify — ideal for use in education or interactive art.
+The core logic is organized as a small set of finite-state machines - the main looper (5 states) plus two tiny sub-FSMs for button timing and tap-tempo - yet still fits in under 400 lines of C.
 
 Read the full architecture with FSM diagram:
 [docs/architecture.md](docs/architecture.md)

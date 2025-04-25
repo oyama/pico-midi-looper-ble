@@ -10,6 +10,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 #include "button.h"
+#include <stdio.h>
 
 #include "hardware/gpio.h"
 #include "hardware/structs/ioqspi.h"
@@ -17,12 +18,14 @@
 #include "pico/stdlib.h"
 
 #define BUTTON_DEBOUNCE_COUNT 10             // consecutive reads needed for stable state
-#define LONG_PRESS_DURATION_US (500 * 1000)  // 500 ms
+#define LONG_PRESS_DURATION_US       (500 * 1000)  // 500 ms
+#define VERY_LONG_PRESS_DURATION_US  (2000 * 1000) // 2 s
 
 typedef enum {
     BUTTON_STATE_IDLE = 0,
     BUTTON_STATE_PRESSED,
-    BUTTON_STATE_LONG_PRESS_ACTIVE
+    BUTTON_STATE_LONG_PRESS_ACTIVE,
+    BUTTON_STATE_VERY_LONG_PRESS_ACTIVE
 } button_state_t;
 
 typedef struct {
@@ -69,33 +72,48 @@ button_event_t button_poll_event(void) {
     static button_fsm_t fsm = {0};
     button_event_t ev = BUTTON_EVENT_NONE;
     bool current_down = bootsel_button_debounce();
-    uint64_t now_us = time_us_64();
+    uint64_t now_us   = time_us_64();
 
     switch (fsm.state) {
-        case BUTTON_STATE_IDLE:
-            if (current_down) {
-                fsm.state = BUTTON_STATE_PRESSED;
-                fsm.press_start_us = now_us;
-                ev = BUTTON_EVENT_DOWN;
-            }
-            break;
+    case BUTTON_STATE_IDLE:
+        if (current_down) {
+            fsm.state = BUTTON_STATE_PRESSED;
+            fsm.press_start_us = now_us;
+            ev = BUTTON_EVENT_DOWN;
+        }
+        break;
 
-        case BUTTON_STATE_PRESSED:
-            if (!current_down) {
-                fsm.state = BUTTON_STATE_IDLE;
-                ev = BUTTON_EVENT_SHORT_PRESS_RELEASE;
-            } else if (now_us - fsm.press_start_us > LONG_PRESS_DURATION_US) {
-                fsm.state = BUTTON_STATE_LONG_PRESS_ACTIVE;
-                ev = BUTTON_EVENT_LONG_PRESS_BEGIN;
-            }
-            break;
+    case BUTTON_STATE_PRESSED:
+        if (!current_down) {
+            fsm.state = BUTTON_STATE_IDLE;
+            ev = BUTTON_EVENT_SHORT_PRESS_RELEASE;
+        } else if (now_us - fsm.press_start_us > VERY_LONG_PRESS_DURATION_US) {
+            fsm.state = BUTTON_STATE_VERY_LONG_PRESS_ACTIVE;
+            ev = BUTTON_EVENT_VERY_LONG_PRESS_BEGIN;
+            printf("very long press begin\n");
+        } else if (now_us - fsm.press_start_us > LONG_PRESS_DURATION_US) {
+            fsm.state = BUTTON_STATE_LONG_PRESS_ACTIVE;
+            ev = BUTTON_EVENT_LONG_PRESS_BEGIN;
+        }
+        break;
 
-        case BUTTON_STATE_LONG_PRESS_ACTIVE:
-            if (!current_down) {
-                fsm.state = BUTTON_STATE_IDLE;
-                ev = BUTTON_EVENT_LONG_PRESS_RELEASE;
-            }
-            break;
+    case BUTTON_STATE_LONG_PRESS_ACTIVE:
+        if (!current_down) {
+            fsm.state = BUTTON_STATE_IDLE;
+            ev = BUTTON_EVENT_LONG_PRESS_RELEASE;
+        } else if (now_us - fsm.press_start_us > VERY_LONG_PRESS_DURATION_US) {
+            fsm.state = BUTTON_STATE_VERY_LONG_PRESS_ACTIVE;
+            ev = BUTTON_EVENT_VERY_LONG_PRESS_BEGIN;
+            printf("very long press begin\n");
+        }
+        break;
+
+    case BUTTON_STATE_VERY_LONG_PRESS_ACTIVE:
+        if (!current_down) {
+            fsm.state = BUTTON_STATE_IDLE;
+            ev = BUTTON_EVENT_VERY_LONG_PRESS_RELEASE;
+        }
+        break;
     }
 
     return ev;

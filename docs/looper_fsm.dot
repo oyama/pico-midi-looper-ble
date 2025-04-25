@@ -1,30 +1,31 @@
 digraph looper_fsm {
-    rankdir=TB;
-    ranksep=1.2;
-    nodesep=1.0;
-
+    /* -------- common style -------- */
     node [shape=circle, fixedsize=true, width=1.4, height=1.4,
-          fontname="Helvetica", style=filled, fillcolor=lightgray, fontsize=15];
+          fontname="Helvetica", style=filled, fillcolor=lightgray, fontsize=14];
+    edge [fontname="Helvetica", fontsize=13];
 
-    edge [fontname="Helvetica", fontsize=15, labeldistance=1.5];
-
-    Startup [label="", shape=point, width=0.1];
-    Waiting [label="WAITING"];
-    Playing [label="PLAYING"];
+    /* -------- states -------- */
+    Startup   [shape=point, width=0.1, label=""];
+    Waiting   [label="WAITING"];
+    Playing   [label="PLAYING"];
     Recording [label="RECORDING"];
     Switching [label="TRACK\nSWITCH"];
+    TapTempo  [label="TAP\nTEMPO"];
 
-    { rank = same;  Playing Recording }
+    /* -------- system events -------- */
+    Startup  -> Waiting   [label="Power-on"];
+    Waiting  -> Playing   [label="BLE connect"];
+    Playing  -> Waiting   [label="BLE disconnect"];
+    Recording-> Waiting   [label="BLE disconnect"];
+    TapTempo -> Waiting   [label="BLE disconnect"];
 
-    Startup -> Waiting [label="Power On"];
+    /* -------- looper button events -------- */
+    Playing   -> Recording [label="Short press"];
+    Recording -> Playing   [label="2-bar done"];
+    Playing   -> Switching [label="Long press"];
+    Switching -> Playing   [label="Release"];
 
-    Waiting -> Playing [label="BLE Connected"];
-    Playing -> Waiting [label="BLE Disconnected"];
-    Recording -> Waiting [label="BLE Disconnected"];
-
-    Playing -> Recording [label="Short Press"];
-    Recording -> Playing [label="1-bar Complete"];
-
-    Playing -> Switching [label="Long Press"];
-    Switching -> Playing [label="Long Press Release"];
+    /* -------- tap-tempo mode switch -------- */
+    Playing  -> TapTempo [label="Very-long press\n(≥ 2 s)"];
+    TapTempo -> Playing  [label="Long-press release\n(≥ 0.5 s)"];
 }
