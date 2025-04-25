@@ -36,7 +36,7 @@ enum {
     BASS_DRUM = 36,
     RIM_SHOT = 37,
     SNARE_DRUM = 38,
-    HAND_CRAP = 39,
+    HAND_CLAP = 39,
     CLOSED_HIHAT = 42,
     OPEN_HIHAT = 46,
     CYMBAL = 49,
@@ -255,7 +255,7 @@ static void looper_process_state(btstack_timer_source_t *ts) {
             break;
         case LOOPER_STATE_TRACK_SWITCH:
             looper_status.current_track = (looper_status.current_track + 1) % NUM_TRACKS;
-            ble_midi_send_note(MIDI_CHANNEL_10, HAND_CRAP, 0x7f);
+            ble_midi_send_note(MIDI_CHANNEL_10, HAND_CLAP, 0x7f);
             looper_next_step(start_us);
             looper_status.state = LOOPER_STATE_PLAYING;
             break;
@@ -324,7 +324,7 @@ static void looper_handle_button_event(button_event_t event) {
         case BUTTON_EVENT_LONG_HOLD_BEGIN:
             // ≥2 s hold: enter Tap-tempo (no track switch)
             looper_status.state = LOOPER_STATE_TAP_TEMPO;
-            ble_midi_send_note(MIDI_CHANNEL_10, HAND_CRAP, 0x7f);
+            ble_midi_send_note(MIDI_CHANNEL_10, HAND_CLAP, 0x7f);
             break;
         default:
             break;

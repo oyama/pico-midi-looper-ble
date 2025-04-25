@@ -46,9 +46,9 @@ The BOOTSEL button is monitored by reading its state using a method specific to 
 An internal FSM (in `button.c`) detects three types of user actions:
 
 - `BUTTON_EVENT_DOWN`
-- `BUTTON_EVENT_SHORT_PRESS_RELEASE`
-- `BUTTON_EVENT_LONG_PRESS_RELEASE`
-- `BUTTON_EVENT_VERY_LONG_PRESS_BEGIN`
+- `BUTTON_EVENT_CLICK_RELEASE`
+- `BUTTON_EVENT_HOLD_RELEASE`
+- `BUTTON_EVENT_LONG_HOLD_BEGIN`
 
 These events are interpreted by the looper (in `main.c`) depending on its current state:
 
