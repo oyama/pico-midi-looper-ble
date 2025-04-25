@@ -65,7 +65,7 @@ Each track is represented by a `track_t` structure containing:
 - A `pattern[]` bit array (one bool per step)
 - An `undo_pattern[]` to revert recording on long press
 
-Two tracks are predefined: `Bass`, `Snare`, `Closed hi-hat` and `Open hi-hat` both on MIDI channel 10.
+Four tracks are predefined: `Bass`, `Snare`, `Closed hi-hat` and `Open hi-hat` both on MIDI channel 10.
 
 ## BLE MIDI Integration
 
@@ -80,7 +80,7 @@ The BLE connection status is monitored and used to gate playback and visual LED 
 | `src/main.c`     | Looper state machine, step sequencer, button event handling |
 | `src/button.c`   | Button press detection, debouncing, and press-type FSM      |
 | `src/ble_midi.c` | BLE advertising and MIDI note delivery                      |
-
+| `src/tap_tempo.c` | Tap-tempo detection & BPM estimation sub-FSM   |
 ## Design Goals
 
 - **Minimalism**: Core logic in under 400 lines of C
