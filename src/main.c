@@ -99,7 +99,7 @@ static void looper_update_bpm(uint32_t bpm) {
 
 // Sends a click/hi-hat; TODO: vary velocity when accent=true
 static void send_midi_click(bool accent) {
-    send_midi_note(MIDI_CHANNEL_1, CLOSED_HIHAT, accent ? 0x5f : 0x5f);
+    ble_midi_send_note(MIDI_CHANNEL_1, CLOSED_HIHAT, accent ? 0x5f : 0x5f);
 }
 
 /*
@@ -179,7 +179,7 @@ static void looper_output_notes(void) {
     for (uint8_t i = 0; i < NUM_TRACKS; i++) {
         bool note_on = tracks[i].pattern[looper_status.current_step];
         if (note_on) {
-            send_midi_note(tracks[i].channel, tracks[i].note, 0x7f);
+            ble_midi_send_note(tracks[i].channel, tracks[i].note, 0x7f);
             if (i == looper_status.current_track)
                 looper_set_status_led(1);
         } else if (i == looper_status.current_track) {
@@ -194,7 +194,7 @@ static void looper_output_notes_recording(void) {
     for (uint8_t i = 0; i < NUM_TRACKS; i++) {
         bool note_on = tracks[i].pattern[looper_status.current_step];
         if (note_on)
-            send_midi_note(tracks[i].channel, tracks[i].note, 0x7f);
+            ble_midi_send_note(tracks[i].channel, tracks[i].note, 0x7f);
     }
 }
 
@@ -231,28 +231,29 @@ static uint8_t looper_quantize_step() {
     return estimated_step;
 }
 
+
 // Processes the looper's main state machine, called by the step timer.
 static void looper_process_state(btstack_timer_source_t *ts) {
     uint64_t start_us = time_us_64();
     bool connection = ble_midi_is_connected();
     show_looper_status();
+
+    if (!connection) {
+        looper_status.state = LOOPER_STATE_WAITING;
+    }
     switch (looper_status.state) {
         case LOOPER_STATE_WAITING:
-            if (connection)
+            if (connection) {
                 looper_status.state = LOOPER_STATE_PLAYING;
+                looper_status.current_step = 0;
+            }
             break;
         case LOOPER_STATE_PLAYING:
-            if (!connection)
-                looper_status.state = LOOPER_STATE_WAITING;
-
             send_click_if_needed();
             looper_output_notes();
             looper_next_step(start_us);
             break;
         case LOOPER_STATE_RECORDING:
-            if (!connection)
-                looper_status.state = LOOPER_STATE_WAITING;
-
             send_click_if_needed();
             looper_output_notes_recording();
             looper_next_step(start_us);
@@ -265,13 +266,11 @@ static void looper_process_state(btstack_timer_source_t *ts) {
             break;
         case LOOPER_STATE_TRACK_SWITCH:
             looper_status.current_track = (looper_status.current_track + 1) % NUM_TRACKS;
-            send_midi_note(MIDI_CHANNEL_10, OPEN_HIHAT, 0x7f);
+            ble_midi_send_note(MIDI_CHANNEL_10, OPEN_HIHAT, 0x7f);
             looper_next_step(start_us);
             looper_status.state = LOOPER_STATE_PLAYING;
             break;
         case LOOPER_STATE_TAP_TEMPO:
-            if (!connection)
-                looper_status.state = LOOPER_STATE_WAITING;
             send_click_if_needed();
             looper_set_status_led((looper_status.current_step % LOOPER_CLICK_DIV) == 0);
             looper_next_step(start_us);
@@ -284,6 +283,27 @@ static void looper_process_state(btstack_timer_source_t *ts) {
 }
 
 /*
+ * Routes button events related to tap-tempo mode.
+ *  – PLAYING + very-long release → enter TAP_TEMPO.
+ *  – While in TAP_TEMPO: forward to sub-FSM; update BPM or exit.
+ *  – Ignored in WAITING / RECORDING / TRACK_SWITCH.
+ */
+static tap_result_t taptempo_handle_button_event(button_event_t event) {
+    tap_result_t result = taptempo_handle_event(event);
+    switch (result) {
+        case TAP_PRELIM:
+        case TAP_FINAL:
+            looper_update_bpm(taptempo_get_bpm());
+            break;
+        case TAP_EXIT: /* leave mode */
+            break;
+        default:
+            break;
+    }
+    return result;
+}
+
+/*
  * Handles button events and updates the looper state accordingly.
  *
  * This includes triggering MIDI notes, starting/stopping recording,
@@ -292,15 +312,13 @@ static void looper_process_state(btstack_timer_source_t *ts) {
  * Event constants are defined in button.c (see button_event_t).
  */
 static void looper_handle_button_event(button_event_t event) {
-    if (looper_status.state == LOOPER_STATE_TAP_TEMPO)
-        return;
-
     track_t *track = &tracks[looper_status.current_track];
+
     switch (event) {
         case BUTTON_EVENT_DOWN:
             // Button pressed: start timing and preview sound
             looper_status.timing.button_press_start_us = time_us_64();
-            send_midi_note(track->channel, track->note, 0x7f);
+            ble_midi_send_note(track->channel, track->note, 0x7f);
             // Backup track pattern in case this press becomes a long-press (undo)
             memcpy(track->undo_pattern, track->pattern, LOOPER_TOTAL_STEPS);
             break;
@@ -319,48 +337,14 @@ static void looper_handle_button_event(button_event_t event) {
             memcpy(track->pattern, track->undo_pattern, LOOPER_TOTAL_STEPS);
             looper_status.state = LOOPER_STATE_TRACK_SWITCH;
             break;
-        default:
-            break;
-    }
-}
-
-/*
- * Routes button events related to tap-tempo mode.
- *  – PLAYING + very-long release → enter TAP_TEMPO.
- *  – While in TAP_TEMPO: forward to sub-FSM; update BPM or exit.
- *  – Ignored in WAITING / RECORDING / TRACK_SWITCH.
- */
-static void taptempo_handle_button_event(button_event_t event) {
-    if (looper_status.state == LOOPER_STATE_WAITING ||
-        looper_status.state == LOOPER_STATE_RECORDING ||
-        looper_status.state == LOOPER_STATE_TRACK_SWITCH) {
-        return;
-    }
-
-    switch (event) {
         case BUTTON_EVENT_VERY_LONG_PRESS_BEGIN:
+            // ≥2 s hold: enter Tap-tempo (no track switch)
             looper_status.state = LOOPER_STATE_TAP_TEMPO;
-            send_midi_note(MIDI_CHANNEL_10, OPEN_HIHAT, 0x7f);
-            taptempo_handle_event(event);
+            ble_midi_send_note(MIDI_CHANNEL_10, OPEN_HIHAT, 0x7f);
             break;
         default:
-            if (looper_status.state != LOOPER_STATE_TAP_TEMPO)
-                return;
-
-            switch (taptempo_handle_event(event)) {
-                case TAP_PRELIM:
-                case TAP_FINAL:
-                    looper_update_bpm(taptempo_get_bpm());
-                    break;
-                case TAP_EXIT: /* leave mode */
-                    looper_status.state = LOOPER_STATE_PLAYING;
-                    break;
-                case TAP_NONE:
-                default:
-                    break;
-            }
+            break;
     }
-    return;
 }
 
 int main(void) {
@@ -371,9 +355,13 @@ int main(void) {
     ble_midi_init(looper_process_state, looper_status.step_duration_ms);
     printf("[MAIN] BLE MIDI Looper start\n");
     while (true) {
-        button_event_t button_event = button_poll_event();
-        taptempo_handle_button_event(button_event);
-        looper_handle_button_event(button_event);
+        button_event_t event = button_poll_event();
+        if (looper_status.state == LOOPER_STATE_TAP_TEMPO) {
+            if (taptempo_handle_button_event(event) == TAP_EXIT)
+                looper_status.state = LOOPER_STATE_PLAYING;
+        } else {
+             looper_handle_button_event(event);
+        }
         looper_update_status_led();
     }
     return 0;

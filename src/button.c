@@ -90,7 +90,6 @@ button_event_t button_poll_event(void) {
         } else if (now_us - fsm.press_start_us > VERY_LONG_PRESS_DURATION_US) {
             fsm.state = BUTTON_STATE_VERY_LONG_PRESS_ACTIVE;
             ev = BUTTON_EVENT_VERY_LONG_PRESS_BEGIN;
-            printf("very long press begin\n");
         } else if (now_us - fsm.press_start_us > LONG_PRESS_DURATION_US) {
             fsm.state = BUTTON_STATE_LONG_PRESS_ACTIVE;
             ev = BUTTON_EVENT_LONG_PRESS_BEGIN;
@@ -104,7 +103,6 @@ button_event_t button_poll_event(void) {
         } else if (now_us - fsm.press_start_us > VERY_LONG_PRESS_DURATION_US) {
             fsm.state = BUTTON_STATE_VERY_LONG_PRESS_ACTIVE;
             ev = BUTTON_EVENT_VERY_LONG_PRESS_BEGIN;
-            printf("very long press begin\n");
         }
         break;
 

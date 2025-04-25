@@ -31,20 +31,6 @@ static btstack_packet_callback_registration_t hci_event_callback_registration;
 static hci_con_handle_t con_handle = HCI_CON_HANDLE_INVALID;
 static btstack_timer_source_t step_timer;
 
-// Sends a Note-On followed immediately by a Note-Off (percussion “hit”).
-void send_midi_note(uint8_t channel, uint8_t note, uint8_t velocity) {
-    if (con_handle == HCI_CON_HANDLE_INVALID)
-        return;
-
-    uint8_t packet[] = {0x80,     0x80, (uint8_t)(0x90 | (channel & 0x0F)), note,
-                        velocity, 0x80, (uint8_t)(0x80 | (channel & 0x0F)), note,
-                        0x00};
-    att_server_notify(con_handle, MIDI_NOTE_HANDLE, packet, sizeof(packet));
-}
-
-// Returns true if a BLE MIDI connection is currently active.
-bool ble_midi_is_connected(void) { return con_handle != HCI_CON_HANDLE_INVALID; }
-
 static void start_advertising(void) {
     uint16_t adv_int_min = 800;
     uint16_t adv_int_max = 800;
@@ -114,3 +100,17 @@ void ble_midi_init(void (*step_cb)(btstack_timer_source_t *ts), uint32_t step_pe
 
     hci_power_control(HCI_POWER_ON);
 }
+
+// Sends a Note-On followed immediately by a Note-Off (percussion “hit”).
+void ble_midi_send_note(uint8_t channel, uint8_t note, uint8_t velocity) {
+    if (con_handle == HCI_CON_HANDLE_INVALID)
+        return;
+
+    uint8_t packet[] = {0x80,     0x80, (uint8_t)(0x90 | (channel & 0x0F)), note,
+                        velocity, 0x80, (uint8_t)(0x80 | (channel & 0x0F)), note,
+                        0x00};
+    att_server_notify(con_handle, MIDI_NOTE_HANDLE, packet, sizeof(packet));
+}
+
+// Returns true if a BLE MIDI connection is currently active.
+bool ble_midi_is_connected(void) { return con_handle != HCI_CON_HANDLE_INVALID; }
