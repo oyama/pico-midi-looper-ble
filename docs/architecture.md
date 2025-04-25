@@ -19,7 +19,7 @@ The firmware centres around a main FSM with five states: `Waiting / Playing / Re
 
 - **Waiting**: Initial idle state before BLE connection is established.
 - **Playing**: Default playback state, running the sequencer.
-- **Recording**: Temporarily active while recording note input for 1 bar.
+- **Recording**: Temporarily active while recording note input for 2 bars.
 - **TrackSwitch**: Transition state when switching between drum tracks.
 - **TapTempo**: temporary mode for tap-tempo BPM entry.
 

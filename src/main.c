@@ -1,6 +1,6 @@
 /* main.c
  * BLE MIDI looper for Raspberry Pi Pico W.
- * A minimal 1-bar loop recorder using a single button to record and switch tracks.
+ * A minimal 2-bars loop recorder using a single button to record and switch tracks.
  *
  * Copyright 2025, Hiroyuki OYAMA
  *
