@@ -5,7 +5,7 @@ This document describes the internal architecture of the Pico MIDI Looper firmwa
 ## Overview
 
 The Pico MIDI Looper is a BLE-MIDI-based loop recorder for Raspberry Pi Pico W.
-It records and plays back a two-bar loop (32 steps) consisting of two drum tracks … In addition to recording, a tap-tempo mode lets you adjust the global BPM on the fly with the same single button.
+It records and plays back a two-bar loop (32 steps) consisting of four drum tracks … In addition to recording, a tap-tempo mode lets you adjust the global BPM on the fly with the same single button.
 Internally, the system is organized around two central mechanisms:
 
 1. A **finite state machine (FSM)** governing the overall looper state
@@ -65,7 +65,7 @@ Each track is represented by a `track_t` structure containing:
 - A `pattern[]` bit array (one bool per step)
 - An `undo_pattern[]` to revert recording on long press
 
-Two tracks are predefined: `Bass` (note 36) and `Snare` (note 38), both on MIDI channel 10.
+Two tracks are predefined: `Bass`, `Snare`, `Closed hi-hat` and `Open hi-hat` both on MIDI channel 10.
 
 ## BLE MIDI Integration
 
