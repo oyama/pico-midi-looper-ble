@@ -63,7 +63,7 @@ tap_result_t taptempo_handle_event(button_event_t ev) {
 
     switch (ctx.state) {
         case TT_IDLE:
-            if (ev == BUTTON_EVENT_VERY_LONG_PRESS_RELEASE) {
+            if (ev == BUTTON_EVENT_LONG_HOLD_RELEASE) {
                 ctx.count = 0;
                 ctx.state = TT_COLLECT;
                 ctx.stamp[0] = now;  // mark entry time
@@ -72,7 +72,7 @@ tap_result_t taptempo_handle_event(button_event_t ev) {
             return TAP_NONE;
 
         case TT_COLLECT:
-            if (ev == BUTTON_EVENT_LONG_PRESS_RELEASE) {
+            if (ev == BUTTON_EVENT_HOLD_RELEASE) {
                 ctx.state = TT_IDLE;
                 // blink_led_fast(false);
                 return TAP_EXIT;
@@ -82,7 +82,7 @@ tap_result_t taptempo_handle_event(button_event_t ev) {
                 ctx.count = 0;
             }
 
-            if (ev == BUTTON_EVENT_SHORT_PRESS_RELEASE) {
+            if (ev == BUTTON_EVENT_CLICK_RELEASE) {
                 if (ctx.count < TAP_MAX_TAPS)
                     ctx.stamp[ctx.count++] = now;
 

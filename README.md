@@ -12,7 +12,7 @@ Record and play back grooves with nothing but the built-in `BOOTSEL` button.
 
 | Item                       | Qty | Notes                                                     |
 |----------------------------|-----|-----------------------------------------------------------|
-| [Raspberry Pi Pico W](https://www.raspberrypi.com/products/raspberry-pi-pico/)        | 1   | Any revision. Comes with on-board BOOTSEL button and LED. |
+| [Raspberry Pi Pico W](https://www.raspberrypi.com/products/raspberry-pi-pico/) | 1   | Comes with on-board BOOTSEL button and LED. |
 | Micro-USB cable            | 1   | For power and firmware install.                           |
 | BLE-MIDI-capable synth/DAW | 1   | e.g. GarageBand on iOS, Logic Pro, etc.                   |
 
@@ -20,10 +20,11 @@ Record and play back grooves with nothing but the built-in `BOOTSEL` button.
 
 - BLE-MIDI compatible (works with GarageBand, DAWs, and synth apps)
 - 2-bar loop (32 steps: 4 beats x 4 subdivisions x 2 bars)
-- Two tracks: bass drum and snare
+- 4-tracks: Bass drum, Snare, Closed Hi-hat and Open Hi-hat
 - Tap-tempo: set the global BPM with 2-4 taps on the same button
 - Quantized note input
 - LED feedback for step visualization
+- Graphical track-pattern display via UART/USB-CDC serial terminal
 - Single-button control with expressive timing
 - Designed for education, installations, and minimalist instruments
 
@@ -59,18 +60,21 @@ All interaction is handled via a single button. The length of your press determi
 | Action                 | Hold-time |  Result                                                                               |
 |------------------------|-----------|---------------------------------------------------------------------------------------|
 | **Short Press**        | < 0.5 s   | Records a note on the current track. Automatically returns to playback after two bars |
-| **Long Press**         | ≥ 0.5 s  | Switches to the other track (open-hihat cue)                                          |
+| **Long Press**         | ≥ 0.5 s  | Switches to the next track (hand-clap cue)                                            |
 | **Very-Long Press**    | ≥ 2 s    | Enters **Tap-tempo** mode. Long Press again (≥0.5 s) to confirm the tempo and return to Playing mode.|
 
 ### Tracks and Sounds
 
-| Function            | MIDI Note / Sound              |
-|---------------------|--------------------------------|
-| Track 1 (Bass Drum) | Note 36 (commonly shown as C1) |
-| Track 2 (Snare Drum)| Note 38 (commonly shown as D1) |
-| Metronome Click     | Note 42 (Closed Hi-Hat)        |
-| Track Switch Cue    | Note 46 (Open Hi-Hat)          |
+| Function          | Sound         | MIDI Note |
+|-------------------|---------------|-----------|
+| **Track 1**       | Bass Drum     | Note 36   |
+| **Track 2**       | Snare Drum    | Note 38   |
+| **Track 3**       | Closed Hi-Hat | Note 42   |
+| **Track 4**       | Open Hi-Hat   | Note 46   |
+| Track Switch Cue  | Hand Clap     | Note 39   |
+| Metronome Click   | Rim shot      | Note 37   |
 
+- Switching tracks cycles through 1 to 4.
 - Notes are automatically quantized to 1/16th-note steps.
 - Recording only affects the currently selected track.
 
@@ -88,7 +92,7 @@ mkdir build && cd build
 PICO_SDK_PATH=/path/to/pico-sdk cmake .. -DPICO_BOARD=pico_w
 make
 ```
-This will produce `pico-midi-looper.uf2` in the `build/` directory.
+This will produce `pico-midi-looper.uf2` in the `build` directory.
 
 ## Architecture
 

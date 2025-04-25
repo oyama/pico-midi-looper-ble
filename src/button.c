@@ -9,23 +9,23 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#include "button.h"
 #include <stdio.h>
-
 #include "hardware/gpio.h"
 #include "hardware/structs/ioqspi.h"
 #include "hardware/sync.h"
 #include "pico/stdlib.h"
 
-#define BUTTON_DEBOUNCE_COUNT 10             // consecutive reads needed for stable state
-#define LONG_PRESS_DURATION_US       (500 * 1000)  // 500 ms
-#define VERY_LONG_PRESS_DURATION_US  (2000 * 1000) // 2 s
+#include "button.h"
+
+#define BUTTON_DEBOUNCE_COUNT 10     // consecutive reads needed for stable state
+#define PRESS_DURATION_US            (500 * 1000)  // 500 ms
+#define LONG_PRESS_DURATION_US       (2000 * 1000) // 2 s
 
 typedef enum {
     BUTTON_STATE_IDLE = 0,
-    BUTTON_STATE_PRESSED,
-    BUTTON_STATE_LONG_PRESS_ACTIVE,
-    BUTTON_STATE_VERY_LONG_PRESS_ACTIVE
+    BUTTON_STATE_PRESS_DOWN,
+    BUTTON_STATE_HOLD_ACTIVE,
+    BUTTON_STATE_LONG_HOLD_ACTIVE,
 } button_state_t;
 
 typedef struct {
@@ -33,9 +33,7 @@ typedef struct {
     uint64_t press_start_us;
 } button_fsm_t;
 
-static bool __no_inline_not_in_flash_func(bootsel_button_debounce)(void) {
-    static uint8_t counter = 0;
-    static bool stable_state = false;
+static bool __no_inline_not_in_flash_func(bootsel_button_raw)(void) {
     const uint CS_PIN_INDEX = 1;
 
     uint32_t flags = save_and_disable_interrupts();
@@ -49,8 +47,14 @@ static bool __no_inline_not_in_flash_func(bootsel_button_debounce)(void) {
                     IO_QSPI_GPIO_QSPI_SS_CTRL_OEOVER_BITS);
     restore_interrupts(flags);
 
-    // debounce
-    if (button_state) {
+    return button_state;
+}
+
+static bool bootsel_button_debounce(void) {
+    static uint8_t counter = 0;
+    static bool stable_state = false;
+
+    if (bootsel_button_raw()) {
         if (counter < BUTTON_DEBOUNCE_COUNT)
             counter++;
     } else {
@@ -77,39 +81,39 @@ button_event_t button_poll_event(void) {
     switch (fsm.state) {
     case BUTTON_STATE_IDLE:
         if (current_down) {
-            fsm.state = BUTTON_STATE_PRESSED;
+            fsm.state = BUTTON_STATE_PRESS_DOWN;
             fsm.press_start_us = now_us;
             ev = BUTTON_EVENT_DOWN;
         }
         break;
 
-    case BUTTON_STATE_PRESSED:
+    case BUTTON_STATE_PRESS_DOWN:
         if (!current_down) {
             fsm.state = BUTTON_STATE_IDLE;
-            ev = BUTTON_EVENT_SHORT_PRESS_RELEASE;
-        } else if (now_us - fsm.press_start_us > VERY_LONG_PRESS_DURATION_US) {
-            fsm.state = BUTTON_STATE_VERY_LONG_PRESS_ACTIVE;
-            ev = BUTTON_EVENT_VERY_LONG_PRESS_BEGIN;
+            ev = BUTTON_EVENT_CLICK_RELEASE;
         } else if (now_us - fsm.press_start_us > LONG_PRESS_DURATION_US) {
-            fsm.state = BUTTON_STATE_LONG_PRESS_ACTIVE;
-            ev = BUTTON_EVENT_LONG_PRESS_BEGIN;
+            fsm.state = BUTTON_STATE_LONG_HOLD_ACTIVE;
+            ev = BUTTON_EVENT_LONG_HOLD_BEGIN;
+        } else if (now_us - fsm.press_start_us > PRESS_DURATION_US) {
+            fsm.state = BUTTON_STATE_HOLD_ACTIVE;
+            ev = BUTTON_EVENT_HOLD_BEGIN;
         }
         break;
 
-    case BUTTON_STATE_LONG_PRESS_ACTIVE:
+    case BUTTON_STATE_HOLD_ACTIVE:
         if (!current_down) {
             fsm.state = BUTTON_STATE_IDLE;
-            ev = BUTTON_EVENT_LONG_PRESS_RELEASE;
-        } else if (now_us - fsm.press_start_us > VERY_LONG_PRESS_DURATION_US) {
-            fsm.state = BUTTON_STATE_VERY_LONG_PRESS_ACTIVE;
-            ev = BUTTON_EVENT_VERY_LONG_PRESS_BEGIN;
+            ev = BUTTON_EVENT_HOLD_RELEASE;
+        } else if (now_us - fsm.press_start_us > LONG_PRESS_DURATION_US) {
+            fsm.state = BUTTON_STATE_LONG_HOLD_ACTIVE;
+            ev = BUTTON_EVENT_LONG_HOLD_BEGIN;
         }
         break;
 
-    case BUTTON_STATE_VERY_LONG_PRESS_ACTIVE:
+    case BUTTON_STATE_LONG_HOLD_ACTIVE:
         if (!current_down) {
             fsm.state = BUTTON_STATE_IDLE;
-            ev = BUTTON_EVENT_VERY_LONG_PRESS_RELEASE;
+            ev = BUTTON_EVENT_LONG_HOLD_RELEASE;
         }
         break;
     }
