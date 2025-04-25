@@ -1,6 +1,6 @@
 # Pico MIDI Looper
 
-![Build Firmware](https://github.com/oyama/pico-midi-looper/actions/workflows/build-firmware.yml/badge.svg)
+[![Build](https://github.com/oyama/pico-midi-looper/actions/workflows/build-firmware.yml/badge.svg)](https://github.com/oyama/pico-midi-looper/actions)
 
 A minimal 1-bar drum looper for Raspberry Pi Pico W that speaks Bluetooth Low-Energy MIDI (BLE-MIDI).
 Build a palm-sized looper in under 10 minutes —ideal for workshops, prototyping, or live-coding sets.
@@ -25,6 +25,27 @@ Record and play back grooves with nothing but the built-in `BOOTSEL` button.
 - LED feedback for step visualization
 - Single-button control with expressive timing
 - Designed for education, installations, and minimalist instruments
+
+## Getting Started
+
+### Flash the Firmware
+
+You can either download a prebuilt `.uf2` from the [Releases](https://github.com/oyama/pico-midi-looper/releases/latest) page, or build it yourself.
+
+To flash the firmware:
+
+1. Hold the `BOOTSEL` button while connecting your Pico W via USB.
+2. Copy the `pico-midi-looper.uf2` file onto the mounted USB drive.
+3. The device will reboot and start running the looper.
+
+### Connect via BLE-MIDI
+
+1. Open a BLE-MIDI compatible app (e.g., GarageBand on iOS).
+2. Look for `Pico` and connect to it.
+3. Start recording and playing right away.
+
+For detailed instructions on iOS, see
+[Getting Started with GarageBand on iPhone](docs/getting-started-with-garageband.md)
 
 ## How It Works
 
@@ -51,27 +72,6 @@ All interaction is handled via a single button. The length of your press determi
 
 - Notes are automatically quantized to 1/16th-note steps.
 - Recording only affects the currently selected track.
-
-## Getting Started
-
-### Flash the Firmware
-
-You can either download a prebuilt `.uf2` from the [Releases](https://github.com/oyama/pico-midi-looper/releases/latest) page, or build it yourself.
-
-To flash the firmware:
-
-1. Hold the `BOOTSEL` button while connecting your Pico W via USB.
-2. Copy the `pico-midi-looper.uf2` file onto the mounted USB drive.
-3. The device will reboot and start running the looper.
-
-### Connect via BLE-MIDI
-
-1. Open a BLE-MIDI compatible app (e.g., GarageBand on iOS).
-2. Look for `Pico` and connect to it.
-3. Start recording and playing right away.
-
-For detailed instructions on iOS, see
-[Getting Started with GarageBand on iPhone](docs/getting-started-with-garageband.md)
 
 ## Building from Source
 

@@ -21,9 +21,9 @@
 #define LOOPER_STEPS_PER_BEAT 4  // Resolution (4 = 16th notes)
 
 #define LOOPER_TOTAL_STEPS (LOOPER_STEPS_PER_BEAT * LOOPER_BEATS_PER_BAR * LOOPER_BARS)
-#define LOOPER_CLICK_DIV (LOOPER_TOTAL_STEPS / LOOPER_STEPS_PER_BEAT)
 // milliseconds per sequencer step (= 60 000 / (LOOPER_BPM × LOOPER_STEPS_PER_BEAT))
 #define LOOPER_STEP_DURATION_MS (60000 / (LOOPER_BPM * LOOPER_STEPS_PER_BEAT))
+#define LOOPER_CLICK_DIV (LOOPER_TOTAL_STEPS / LOOPER_STEPS_PER_BEAT)
 
 #define ANSI_BG_HILITE "\x1b[47m"
 #define ANSI_CLEAR "\x1b[0m"
@@ -298,7 +298,7 @@ int main(void) {
     ble_midi_init(looper_process_state, LOOPER_STEP_DURATION_MS);
     printf("[MAIN] BLE MIDI Looper start\n");
     while (true) {
-        button_event_t button_event = button_pool_event();
+        button_event_t button_event = button_poll_event();
         handle_button_event(button_event);
         looper_update_status_led();
     }

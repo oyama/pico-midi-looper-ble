@@ -65,7 +65,7 @@ static bool __no_inline_not_in_flash_func(bootsel_button_debounce)(void) {
  * Reads BOOTSEL button state and returns a button_event_t (see button.h).
  * Maintains internal FSM to distinguish short press, long press, and release.
  */
-button_event_t button_pool_event(void) {
+button_event_t button_poll_event(void) {
     static button_fsm_t fsm = {0};
     button_event_t ev = BUTTON_EVENT_NONE;
     bool current_down = bootsel_button_debounce();

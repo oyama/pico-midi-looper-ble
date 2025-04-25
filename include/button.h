@@ -17,4 +17,4 @@ typedef enum {
 
 bool __no_inline_not_in_flash_func(bb_get_bootsel_button)();
 
-button_event_t button_pool_event(void);
+button_event_t button_poll_event(void);
