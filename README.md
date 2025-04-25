@@ -51,7 +51,7 @@ For detailed instructions on iOS, see
 
 ## How It Works
 
-You build up your loop by switching between two tracks and entering notes step by step.
+You build up your loop by switching between four tracks and entering notes step by step.
 Once powered on, the looper is ready to use.
 All interaction is handled via a single button. The length of your press determines the action.
 
