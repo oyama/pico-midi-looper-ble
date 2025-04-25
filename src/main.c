@@ -46,7 +46,7 @@ enum {
 typedef enum {
     LOOPER_STATE_WAITING = 0,   // BLE not connected, waiting.
     LOOPER_STATE_PLAYING,       // Playing back loop.
-    LOOPER_STATE_RECORDING,     // One-bar recording in progress.
+    LOOPER_STATE_RECORDING,     // Recording in progress.
     LOOPER_STATE_TRACK_SWITCH,  // Switching to next track.
     LOOPER_STATE_TAP_TEMPO,
 } looper_state_t;
@@ -273,7 +273,7 @@ static void looper_process_state(btstack_timer_source_t *ts) {
 
 /*
  * Routes button events related to tap-tempo mode.
- * - PLAYING + very-long release → enter TAP_TEMPO.
+ * - PLAYING + long release → enter TAP_TEMPO.
  * - While in TAP_TEMPO: forward to sub-FSM; update BPM or exit.
  * - Ignored in WAITING / RECORDING / TRACK_SWITCH.
  */
