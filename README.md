@@ -2,7 +2,7 @@
 
 [![Build](https://github.com/oyama/pico-midi-looper/actions/workflows/build-firmware.yml/badge.svg)](https://github.com/oyama/pico-midi-looper/actions)
 
-A minimal 2-bar drum looper for Raspberry Pi Pico W that speaks Bluetooth Low-Energy MIDI (BLE-MIDI).
+A minimal 2-bars drum looper for Raspberry Pi Pico W that speaks Bluetooth Low-Energy MIDI (BLE-MIDI).
 Build a palm-sized looper in under 10 minutes —ideal for workshops, prototyping, or live-coding sets.
 Record and play back grooves with nothing but the built-in `BOOTSEL` button.
 
@@ -19,7 +19,7 @@ Record and play back grooves with nothing but the built-in `BOOTSEL` button.
 ## Features
 
 - BLE-MIDI compatible (works with GarageBand, DAWs, and synth apps)
-- 2-bar loop (32 steps: 4 beats x 4 subdivisions x 2 bars)
+- 2-bars loop (32 steps: 4 beats x 4 subdivisions x 2 bars)
 - 4-tracks: Bass drum, Snare, Closed Hi-hat and Open Hi-hat
 - Tap-tempo: set the global BPM with 2-4 taps on the same button
 - Quantized note input
