@@ -49,6 +49,7 @@ typedef enum {
     LOOPER_STATE_RECORDING,     // recording in progress.
     LOOPER_STATE_TRACK_SWITCH,  // Switching to next track.
     LOOPER_STATE_TAP_TEMPO,
+    LOOPER_STATE_CLEAR_ALL,
 } looper_state_t;
 
 typedef struct {
@@ -220,6 +221,11 @@ static uint8_t looper_quantize_step() {
     return estimated_step;
 }
 
+static void looper_clear_all_tracks() {
+    for (uint8_t i = 0; i < NUM_TRACKS; i++)
+        memset(tracks[i].pattern, 0, sizeof(tracks[i].pattern));
+}
+
 // Processes the looper's main state machine, called by the step timer.
 static void looper_process_state(btstack_timer_source_t *ts) {
     uint64_t start_us = time_us_64();
@@ -264,6 +270,11 @@ static void looper_process_state(btstack_timer_source_t *ts) {
             looper_set_status_led((looper_status.current_step % LOOPER_CLICK_DIV) == 0);
             looper_next_step(start_us);
             break;
+        case LOOPER_STATE_CLEAR_ALL:
+            looper_clear_all_tracks();
+            looper_status.current_track = 0;
+            looper_next_step(start_us);
+            looper_status.state = LOOPER_STATE_PLAYING;
         default:
             break;
     }
@@ -321,9 +332,14 @@ static void looper_handle_button_event(button_event_t event) {
             memcpy(track->pattern, track->undo_pattern, LOOPER_TOTAL_STEPS);
             looper_status.state = LOOPER_STATE_TRACK_SWITCH;
             break;
-        case BUTTON_EVENT_LONG_HOLD_BEGIN:
+        case BUTTON_EVENT_LONG_HOLD_RELEASE:
             // ≥2 s hold: enter Tap-tempo (no track switch)
             looper_status.state = LOOPER_STATE_TAP_TEMPO;
+            ble_midi_send_note(MIDI_CHANNEL_10, HAND_CLAP, 0x7f);
+            break;
+        case BUTTON_EVENT_VERY_LONG_HOLD_RELEASE:
+            // ≥5 s hold: clear track data
+            looper_status.state = LOOPER_STATE_CLEAR_ALL;
             ble_midi_send_note(MIDI_CHANNEL_10, HAND_CLAP, 0x7f);
             break;
         default:
@@ -341,8 +357,9 @@ int main(void) {
     while (true) {
         button_event_t event = button_poll_event();
         if (looper_status.state == LOOPER_STATE_TAP_TEMPO) {
-            if (taptempo_handle_button_event(event) == TAP_EXIT)
+            if (taptempo_handle_button_event(event) == TAP_EXIT) {
                 looper_status.state = LOOPER_STATE_PLAYING;
+            }
         } else {
              looper_handle_button_event(event);
         }

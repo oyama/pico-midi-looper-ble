@@ -20,12 +20,14 @@
 #define BUTTON_DEBOUNCE_COUNT 10     // consecutive reads needed for stable state
 #define PRESS_DURATION_US            (500 * 1000)  // 500 ms
 #define LONG_PRESS_DURATION_US       (2000 * 1000) // 2 s
+#define VERY_LONG_PRESS_DURATION_US  (5000 * 1000) // 5 s
 
 typedef enum {
     BUTTON_STATE_IDLE = 0,
     BUTTON_STATE_PRESS_DOWN,
     BUTTON_STATE_HOLD_ACTIVE,
     BUTTON_STATE_LONG_HOLD_ACTIVE,
+    BUTTON_STATE_VERY_LONG_HOLD_ACTIVE,
 } button_state_t;
 
 typedef struct {
@@ -79,44 +81,52 @@ button_event_t button_poll_event(void) {
     uint64_t now_us   = time_us_64();
 
     switch (fsm.state) {
-    case BUTTON_STATE_IDLE:
-        if (current_down) {
-            fsm.state = BUTTON_STATE_PRESS_DOWN;
-            fsm.press_start_us = now_us;
-            ev = BUTTON_EVENT_DOWN;
-        }
-        break;
+        case BUTTON_STATE_IDLE:
+            if (current_down) {
+                fsm.state = BUTTON_STATE_PRESS_DOWN;
+                fsm.press_start_us = now_us;
+                ev = BUTTON_EVENT_DOWN;
+            }
+            break;
 
-    case BUTTON_STATE_PRESS_DOWN:
-        if (!current_down) {
-            fsm.state = BUTTON_STATE_IDLE;
-            ev = BUTTON_EVENT_CLICK_RELEASE;
-        } else if (now_us - fsm.press_start_us > LONG_PRESS_DURATION_US) {
-            fsm.state = BUTTON_STATE_LONG_HOLD_ACTIVE;
-            ev = BUTTON_EVENT_LONG_HOLD_BEGIN;
-        } else if (now_us - fsm.press_start_us > PRESS_DURATION_US) {
-            fsm.state = BUTTON_STATE_HOLD_ACTIVE;
-            ev = BUTTON_EVENT_HOLD_BEGIN;
-        }
-        break;
+        case BUTTON_STATE_PRESS_DOWN:
+            if (!current_down) {
+                fsm.state = BUTTON_STATE_IDLE;
+                ev = BUTTON_EVENT_CLICK_RELEASE;
+            } else if (now_us - fsm.press_start_us > LONG_PRESS_DURATION_US) {
+                fsm.state = BUTTON_STATE_LONG_HOLD_ACTIVE;
+                ev = BUTTON_EVENT_LONG_HOLD_BEGIN;
+            } else if (now_us - fsm.press_start_us > PRESS_DURATION_US) {
+                fsm.state = BUTTON_STATE_HOLD_ACTIVE;
+                ev = BUTTON_EVENT_HOLD_BEGIN;
+            }
+            break;
 
-    case BUTTON_STATE_HOLD_ACTIVE:
-        if (!current_down) {
-            fsm.state = BUTTON_STATE_IDLE;
-            ev = BUTTON_EVENT_HOLD_RELEASE;
-        } else if (now_us - fsm.press_start_us > LONG_PRESS_DURATION_US) {
-            fsm.state = BUTTON_STATE_LONG_HOLD_ACTIVE;
-            ev = BUTTON_EVENT_LONG_HOLD_BEGIN;
-        }
-        break;
+        case BUTTON_STATE_HOLD_ACTIVE:
+            if (!current_down) {
+                fsm.state = BUTTON_STATE_IDLE;
+                ev = BUTTON_EVENT_HOLD_RELEASE;
+            } else if (now_us - fsm.press_start_us > LONG_PRESS_DURATION_US) {
+                fsm.state = BUTTON_STATE_LONG_HOLD_ACTIVE;
+                ev = BUTTON_EVENT_LONG_HOLD_BEGIN;
+            }
+            break;
 
-    case BUTTON_STATE_LONG_HOLD_ACTIVE:
-        if (!current_down) {
-            fsm.state = BUTTON_STATE_IDLE;
-            ev = BUTTON_EVENT_LONG_HOLD_RELEASE;
-        }
-        break;
+        case BUTTON_STATE_LONG_HOLD_ACTIVE:
+            if (!current_down) {
+                fsm.state = BUTTON_STATE_IDLE;
+                ev = BUTTON_EVENT_LONG_HOLD_RELEASE;
+            } else if (now_us - fsm.press_start_us > VERY_LONG_PRESS_DURATION_US) {
+                fsm.state = BUTTON_STATE_VERY_LONG_HOLD_ACTIVE;
+                ev = BUTTON_EVENT_VERY_LONG_HOLD_BEGIN;
+            }
+            break;
+        case BUTTON_STATE_VERY_LONG_HOLD_ACTIVE:
+            if (!current_down) {
+                fsm.state = BUTTON_STATE_IDLE;
+                ev = BUTTON_EVENT_VERY_LONG_HOLD_RELEASE;
+            }
+            break;
     }
-
     return ev;
 }

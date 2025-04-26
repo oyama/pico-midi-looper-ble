@@ -11,7 +11,7 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-
+#include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include "pico/time.h"
@@ -63,26 +63,23 @@ tap_result_t taptempo_handle_event(button_event_t ev) {
 
     switch (ctx.state) {
         case TT_IDLE:
-            if (ev == BUTTON_EVENT_LONG_HOLD_RELEASE) {
+            if (ev == BUTTON_EVENT_HOLD_RELEASE) {
+                ctx.state = TT_IDLE;
+                return TAP_EXIT;
+            } else if (ev == BUTTON_EVENT_CLICK_RELEASE) {
                 ctx.count = 0;
                 ctx.state = TT_COLLECT;
                 ctx.stamp[0] = now;  // mark entry time
-                // blink_led_fast(true);       // visual cue
             }
             return TAP_NONE;
 
         case TT_COLLECT:
-            if (ev == BUTTON_EVENT_HOLD_RELEASE) {
-                ctx.state = TT_IDLE;
-                // blink_led_fast(false);
-                return TAP_EXIT;
-            }
-
             if (ctx.count && (now - ctx.stamp[ctx.count ? ctx.count - 1 : 0]) > TIMEOUT_US) {
                 ctx.count = 0;
+                ctx.state = TT_IDLE;
+                return TAP_NONE;
             }
-
-            if (ev == BUTTON_EVENT_CLICK_RELEASE) {
+            else if (ev == BUTTON_EVENT_CLICK_RELEASE) {
                 if (ctx.count < TAP_MAX_TAPS)
                     ctx.stamp[ctx.count++] = now;
 
