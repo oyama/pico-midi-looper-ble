@@ -6,7 +6,7 @@ A minimal 2-bars drum looper for Raspberry Pi Pico W that speaks Bluetooth Low-E
 Build a thumb-sized looper in under 5 minutes —ideal for workshops, prototyping, or live-coding sets.
 Record and play back grooves with nothing but the built-in `BOOTSEL` button.
 
-[![YouTube Demo](https://img.youtube.com/vi/biRl0yx8jz4/0.jpg)](https://www.youtube.com/watch?v=biRl0yx8jz4)
+[![YouTube Demo](https://img.youtube.com/vi/cwbePWCfNIY/0.jpg)](https://www.youtube.com/shorts/cwbePWCfNIY)
 
 ## Bill of Materials
 
