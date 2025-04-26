@@ -9,7 +9,6 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#include <stdio.h>
 #include "hardware/gpio.h"
 #include "hardware/structs/ioqspi.h"
 #include "hardware/sync.h"
@@ -17,10 +16,10 @@
 
 #include "button.h"
 
-#define BUTTON_DEBOUNCE_COUNT 10     // consecutive reads needed for stable state
-#define PRESS_DURATION_US            (500 * 1000)  // 500 ms
-#define LONG_PRESS_DURATION_US       (2000 * 1000) // 2 s
-#define VERY_LONG_PRESS_DURATION_US  (5000 * 1000) // 5 s
+#define BUTTON_DEBOUNCE_COUNT 10                   // consecutive reads needed for stable state
+#define PRESS_DURATION_US (500 * 1000)             // 500 ms
+#define LONG_PRESS_DURATION_US (2000 * 1000)       // 2 s
+#define VERY_LONG_PRESS_DURATION_US (5000 * 1000)  // 5 s
 
 typedef enum {
     BUTTON_STATE_IDLE = 0,
@@ -78,7 +77,7 @@ button_event_t button_poll_event(void) {
     static button_fsm_t fsm = {0};
     button_event_t ev = BUTTON_EVENT_NONE;
     bool current_down = bootsel_button_debounce();
-    uint64_t now_us   = time_us_64();
+    uint64_t now_us = time_us_64();
 
     switch (fsm.state) {
         case BUTTON_STATE_IDLE:

@@ -1,122 +1,141 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="700pt" height="488pt" viewBox="0.00 0.00 699.66 488.00">
-<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 484)">
-<title>looper_fsm</title>
-<polygon fill="white" stroke="none" points="-4,4 -4,-484 695.66,-484 695.66,4 -4,4"/>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="484pt" height="634pt" viewBox="0.00 0.00 484.40 634.40">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 630.4)">
+<title>LooperFSM</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-630.4 480.4,-630.4 480.4,4 -4,4"/>
 <!-- Startup -->
 <g id="node1" class="node">
 <title>Startup</title>
-<ellipse fill="lightgray" stroke="black" cx="273.4" cy="-476.4" rx="3.6" ry="3.6"/>
+<ellipse fill="lightgray" stroke="black" cx="247.2" cy="-622.8" rx="3.6" ry="3.6"/>
 </g>
-<!-- Waiting -->
+<!-- WAITING -->
 <g id="node2" class="node">
-<title>Waiting</title>
-<ellipse fill="lightgray" stroke="black" cx="273.4" cy="-370.8" rx="50.4" ry="50.4"/>
-<text text-anchor="middle" x="273.4" y="-366.6" font-family="Helvetica,sans-Serif" font-size="14.00">WAITING</text>
+<title>WAITING</title>
+<ellipse fill="lightgray" stroke="black" cx="247.2" cy="-456" rx="43.2" ry="43.2"/>
+<text text-anchor="middle" x="247.2" y="-452.4" font-family="Helvetica,sans-Serif" font-size="12.00">WAITING</text>
 </g>
-<!-- Startup&#45;&gt;Waiting -->
+<!-- Startup&#45;&gt;WAITING -->
 <g id="edge1" class="edge">
-<title>Startup-&gt;Waiting</title>
-<path fill="none" stroke="black" d="M273.4,-472.41C273.4,-466.02 273.4,-450.17 273.4,-432.9"/>
-<polygon fill="black" stroke="black" points="276.9,-432.95 273.4,-422.95 269.9,-432.95 276.9,-432.95"/>
-<text text-anchor="middle" x="301.22" y="-443.1" font-family="Helvetica,sans-Serif" font-size="13.00">Power-on</text>
+<title>Startup-&gt;WAITING</title>
+<path fill="none" stroke="black" d="M247.2,-618.94C247.2,-606.16 247.2,-553.11 247.2,-511.17"/>
+<polygon fill="black" stroke="black" points="250.7,-511.19 247.2,-501.19 243.7,-511.19 250.7,-511.19"/>
+<text text-anchor="middle" x="269.99" y="-556.2" font-family="Helvetica,sans-Serif" font-size="10.00"> Power-on</text>
 </g>
-<!-- Playing -->
-<g id="node3" class="node">
-<title>Playing</title>
-<ellipse fill="lightgray" stroke="black" cx="274.4" cy="-218.4" rx="50.4" ry="50.4"/>
-<text text-anchor="middle" x="274.4" y="-214.2" font-family="Helvetica,sans-Serif" font-size="14.00">PLAYING</text>
-</g>
-<!-- Waiting&#45;&gt;Playing -->
-<g id="edge2" class="edge">
-<title>Waiting-&gt;Playing</title>
-<path fill="none" stroke="black" d="M238.32,-334.5C228.33,-320.28 221.42,-303.34 226.68,-286.8 228.85,-279.99 231.99,-273.27 235.63,-266.87"/>
-<polygon fill="black" stroke="black" points="238.59,-268.73 240.9,-258.39 232.65,-265.03 238.59,-268.73"/>
-<text text-anchor="middle" x="263.54" y="-290.7" font-family="Helvetica,sans-Serif" font-size="13.00">BLE connect</text>
-</g>
-<!-- Playing&#45;&gt;Waiting -->
-<g id="edge3" class="edge">
-<title>Playing-&gt;Waiting</title>
-<path fill="none" stroke="black" d="M296.82,-263.72C300.73,-276.1 302.86,-289.65 300.4,-302.4 299.67,-306.17 298.74,-309.99 297.66,-313.8"/>
-<polygon fill="black" stroke="black" points="294.42,-312.43 294.72,-323.02 301.09,-314.56 294.42,-312.43"/>
-<text text-anchor="middle" x="346.62" y="-290.7" font-family="Helvetica,sans-Serif" font-size="13.00">BLE disconnect</text>
-</g>
-<!-- Recording -->
-<g id="node4" class="node">
-<title>Recording</title>
-<ellipse fill="lightgray" stroke="black" cx="50.4" cy="-50.4" rx="50.4" ry="50.4"/>
-<text text-anchor="middle" x="50.4" y="-46.2" font-family="Helvetica,sans-Serif" font-size="14.00">RECORDING</text>
-</g>
-<!-- Playing&#45;&gt;Recording -->
-<g id="edge6" class="edge">
-<title>Playing-&gt;Recording</title>
-<path fill="none" stroke="black" d="M226.28,-202.75C193.83,-192.88 150.06,-179.61 111.4,-168 84.54,-159.93 67.75,-172.44 50.93,-150 42.58,-138.87 39.48,-124.87 39.14,-110.94"/>
-<polygon fill="black" stroke="black" points="42.63,-111.44 39.37,-101.36 35.63,-111.27 42.63,-111.44"/>
-<text text-anchor="middle" x="84.16" y="-130.5" font-family="Helvetica,sans-Serif" font-size="13.00">Short press</text>
-</g>
-<!-- Switching -->
-<g id="node5" class="node">
-<title>Switching</title>
-<ellipse fill="lightgray" stroke="black" cx="274.4" cy="-50.4" rx="50.4" ry="50.4"/>
-<text text-anchor="middle" x="274.4" y="-54.6" font-family="Helvetica,sans-Serif" font-size="14.00">TRACK</text>
-<text text-anchor="middle" x="274.4" y="-37.8" font-family="Helvetica,sans-Serif" font-size="14.00">SWITCH</text>
-</g>
-<!-- Playing&#45;&gt;Switching -->
-<g id="edge8" class="edge">
-<title>Playing-&gt;Switching</title>
-<path fill="none" stroke="black" d="M244.29,-177.45C239.26,-168.81 234.79,-159.43 232.08,-150 228.24,-136.67 228.24,-132.13 232.08,-118.8 233.78,-112.91 236.16,-107.03 238.93,-101.35"/>
-<polygon fill="black" stroke="black" points="241.93,-103.15 243.58,-92.69 235.77,-99.85 241.93,-103.15"/>
-<text text-anchor="middle" x="264.24" y="-130.5" font-family="Helvetica,sans-Serif" font-size="13.00">Long press</text>
-</g>
-<!-- TapTempo -->
+<!-- PLAYING -->
 <g id="node6" class="node">
-<title>TapTempo</title>
-<ellipse fill="lightgray" stroke="black" cx="503.4" cy="-50.4" rx="50.4" ry="50.4"/>
-<text text-anchor="middle" x="503.4" y="-54.6" font-family="Helvetica,sans-Serif" font-size="14.00">TAP</text>
-<text text-anchor="middle" x="503.4" y="-37.8" font-family="Helvetica,sans-Serif" font-size="14.00">TEMPO</text>
+<title>PLAYING</title>
+<ellipse fill="lightgray" stroke="black" cx="231.2" cy="-249.6" rx="43.2" ry="43.2"/>
+<text text-anchor="middle" x="231.2" y="-246" font-family="Helvetica,sans-Serif" font-size="12.00">PLAYING</text>
 </g>
-<!-- Playing&#45;&gt;TapTempo -->
+<!-- WAITING&#45;&gt;PLAYING -->
+<g id="edge2" class="edge">
+<title>WAITING-&gt;PLAYING</title>
+<path fill="none" stroke="black" d="M220.34,-422.04C207.71,-404.42 194.02,-381.67 187.5,-358.8 181.25,-336.9 188.92,-313.37 199.48,-293.87"/>
+<polygon fill="black" stroke="black" points="202.42,-295.77 204.45,-285.37 196.38,-292.24 202.42,-295.77"/>
+<text text-anchor="middle" x="218.35" y="-349.8" font-family="Helvetica,sans-Serif" font-size="10.00"> BLE Connect</text>
+</g>
+<!-- TRACK_SWITCH -->
+<g id="node3" class="node">
+<title>TRACK_SWITCH</title>
+<ellipse fill="lightgray" stroke="black" cx="150.2" cy="-43.2" rx="43.2" ry="43.2"/>
+<text text-anchor="middle" x="150.2" y="-46.8" font-family="Helvetica,sans-Serif" font-size="12.00">TRACK</text>
+<text text-anchor="middle" x="150.2" y="-32.4" font-family="Helvetica,sans-Serif" font-size="12.00">SWITCH</text>
+</g>
+<!-- TRACK_SWITCH&#45;&gt;PLAYING -->
 <g id="edge10" class="edge">
-<title>Playing-&gt;TapTempo</title>
-<path fill="none" stroke="black" d="M311.23,-183.33C333.41,-163.52 362.64,-138.64 390.36,-118.8 409.03,-105.44 430.46,-92.18 449.61,-81.01"/>
-<polygon fill="black" stroke="black" points="451.16,-84.15 458.07,-76.12 447.66,-78.09 451.16,-84.15"/>
-<text text-anchor="middle" x="435.88" y="-138.3" font-family="Helvetica,sans-Serif" font-size="13.00">Very-long press</text>
-<text text-anchor="middle" x="435.88" y="-122.7" font-family="Helvetica,sans-Serif" font-size="13.00">(≥ 2 s)</text>
+<title>TRACK_SWITCH-&gt;PLAYING</title>
+<path fill="none" stroke="black" d="M165.27,-84.11C173.06,-104.57 182.79,-129.86 191.74,-152.4 197.74,-167.52 204.41,-183.92 210.53,-198.82"/>
+<polygon fill="black" stroke="black" points="207.25,-200.05 214.29,-207.97 213.72,-197.39 207.25,-200.05"/>
+<text text-anchor="middle" x="226.47" y="-143.4" font-family="Helvetica,sans-Serif" font-size="10.00"> Track switched</text>
 </g>
-<!-- Recording&#45;&gt;Waiting -->
-<g id="edge4" class="edge">
-<title>Recording-&gt;Waiting</title>
-<path fill="none" stroke="black" d="M34.98,-98.84C31.88,-115.33 31.01,-133.76 36.4,-150 66.05,-239.3 158.52,-305.91 218.81,-341.25"/>
-<polygon fill="black" stroke="black" points="216.84,-344.15 227.25,-346.1 220.33,-338.08 216.84,-344.15"/>
-<text text-anchor="middle" x="163.13" y="-214.5" font-family="Helvetica,sans-Serif" font-size="13.00">BLE disconnect</text>
+<!-- CLEAR_TRACKS -->
+<g id="node4" class="node">
+<title>CLEAR_TRACKS</title>
+<ellipse fill="lightgray" stroke="black" cx="311.2" cy="-43.2" rx="43.2" ry="43.2"/>
+<text text-anchor="middle" x="311.2" y="-46.8" font-family="Helvetica,sans-Serif" font-size="12.00">CLEAR</text>
+<text text-anchor="middle" x="311.2" y="-32.4" font-family="Helvetica,sans-Serif" font-size="12.00">TRACKS</text>
 </g>
-<!-- Recording&#45;&gt;Playing -->
-<g id="edge7" class="edge">
-<title>Recording-&gt;Playing</title>
-<path fill="none" stroke="black" d="M84.75,-87.36C104.58,-107.09 130.56,-131.27 156.02,-150 175.75,-164.51 198.88,-178.31 219.45,-189.6"/>
-<polygon fill="black" stroke="black" points="217.51,-192.54 227.97,-194.22 220.84,-186.38 217.51,-192.54"/>
-<text text-anchor="middle" x="190.71" y="-130.5" font-family="Helvetica,sans-Serif" font-size="13.00">2-bars done</text>
+<!-- CLEAR_TRACKS&#45;&gt;PLAYING -->
+<g id="edge13" class="edge">
+<title>CLEAR_TRACKS-&gt;PLAYING</title>
+<path fill="none" stroke="black" d="M338.12,-76.98C352.56,-98.75 365.16,-127.74 353.2,-152.4 337.95,-183.85 306.88,-208.11 279.91,-224.4"/>
+<polygon fill="black" stroke="black" points="278.4,-221.23 271.51,-229.28 281.91,-227.29 278.4,-221.23"/>
+<text text-anchor="middle" x="375.63" y="-143.4" font-family="Helvetica,sans-Serif" font-size="10.00"> Deleted</text>
 </g>
-<!-- Switching&#45;&gt;Playing -->
-<g id="edge9" class="edge">
-<title>Switching-&gt;Playing</title>
-<path fill="none" stroke="black" d="M291.72,-98.07C293.66,-104.94 295.32,-111.99 296.4,-118.8 298.58,-132.49 298.58,-136.31 296.4,-150 295.89,-153.19 295.26,-156.44 294.53,-159.69"/>
-<polygon fill="black" stroke="black" points="291.17,-158.71 292.09,-169.26 297.95,-160.43 291.17,-158.71"/>
-<text text-anchor="middle" x="321.88" y="-130.5" font-family="Helvetica,sans-Serif" font-size="13.00">Release</text>
+<!-- TAP_TEMPO -->
+<g id="node5" class="node">
+<title>TAP_TEMPO</title>
+<ellipse fill="lightgray" stroke="black" cx="43.2" cy="-249.6" rx="43.2" ry="43.2"/>
+<text text-anchor="middle" x="43.2" y="-253.2" font-family="Helvetica,sans-Serif" font-size="12.00">TAP</text>
+<text text-anchor="middle" x="43.2" y="-238.8" font-family="Helvetica,sans-Serif" font-size="12.00">TEMPO</text>
 </g>
-<!-- TapTempo&#45;&gt;Waiting -->
-<g id="edge5" class="edge">
-<title>TapTempo-&gt;Waiting</title>
-<path fill="none" stroke="black" d="M550.56,-69.2C588.14,-86.41 631.65,-114.97 613.4,-150 555.51,-261.11 413.4,-324.05 332.42,-352.04"/>
-<polygon fill="black" stroke="black" points="331.68,-348.59 323.33,-355.11 333.92,-355.22 331.68,-348.59"/>
-<text text-anchor="middle" x="646.49" y="-214.5" font-family="Helvetica,sans-Serif" font-size="13.00">BLE disconnect</text>
-</g>
-<!-- TapTempo&#45;&gt;Playing -->
+<!-- TAP_TEMPO&#45;&gt;WAITING -->
 <g id="edge11" class="edge">
-<title>TapTempo-&gt;Playing</title>
-<path fill="none" stroke="black" d="M502.16,-101.14C499.37,-118.42 493.43,-136.76 481.4,-150 444.41,-190.69 382.6,-206.9 336.13,-213.31"/>
-<polygon fill="black" stroke="black" points="335.96,-209.81 326.47,-214.52 336.83,-216.75 335.96,-209.81"/>
-<text text-anchor="middle" x="553.63" y="-138.3" font-family="Helvetica,sans-Serif" font-size="13.00">Long-press release</text>
-<text text-anchor="middle" x="553.63" y="-122.7" font-family="Helvetica,sans-Serif" font-size="13.00">(≥ 0.5 s)</text>
+<title>TAP_TEMPO-&gt;WAITING</title>
+<path fill="none" stroke="black" d="M58.78,-290.37C68.69,-312.24 83.08,-338.89 101.27,-358.8 128.76,-388.89 167.58,-413.89 198.27,-430.85"/>
+<polygon fill="black" stroke="black" points="196.54,-433.9 207,-435.57 199.87,-427.74 196.54,-433.9"/>
+<text text-anchor="middle" x="138.24" y="-349.8" font-family="Helvetica,sans-Serif" font-size="10.00"> BLE Disconnect</text>
+</g>
+<!-- TAP_TEMPO&#45;&gt;PLAYING -->
+<g id="edge12" class="edge">
+<title>TAP_TEMPO-&gt;PLAYING</title>
+<path fill="none" stroke="black" d="M86.8,-249.6C113.4,-249.6 147.64,-249.6 176.11,-249.6"/>
+<polygon fill="black" stroke="black" points="175.99,-253.1 185.99,-249.6 175.99,-246.1 175.99,-253.1"/>
+<text text-anchor="middle" x="137.2" y="-255.6" font-family="Helvetica,sans-Serif" font-size="10.00"> Button press</text>
+</g>
+<!-- PLAYING&#45;&gt;WAITING -->
+<g id="edge3" class="edge">
+<title>PLAYING-&gt;WAITING</title>
+<path fill="none" stroke="black" d="M243.72,-291.38C248.31,-308.34 252.93,-328.35 255.2,-346.8 257.38,-364.58 256.84,-384.09 255.3,-401.58"/>
+<polygon fill="black" stroke="black" points="251.81,-401.22 254.28,-411.53 258.78,-401.93 251.81,-401.22"/>
+<text text-anchor="middle" x="293.21" y="-349.8" font-family="Helvetica,sans-Serif" font-size="10.00"> BLE Disconnect</text>
+</g>
+<!-- PLAYING&#45;&gt;TRACK_SWITCH -->
+<g id="edge5" class="edge">
+<title>PLAYING-&gt;TRACK_SWITCH</title>
+<path fill="none" stroke="black" d="M190.9,-233.54C157.34,-218.59 111.79,-192.12 90.86,-152.4 78.13,-128.24 92.78,-101.32 110.71,-80.38"/>
+<polygon fill="black" stroke="black" points="113.09,-82.96 117.22,-73.21 107.91,-78.26 113.09,-82.96"/>
+<text text-anchor="middle" x="105.03" y="-143.4" font-family="Helvetica,sans-Serif" font-size="10.00"> Press</text>
+</g>
+<!-- PLAYING&#45;&gt;CLEAR_TRACKS -->
+<g id="edge7" class="edge">
+<title>PLAYING-&gt;CLEAR_TRACKS</title>
+<path fill="none" stroke="black" d="M246.62,-209.19C259.42,-176.49 277.7,-129.8 291.54,-94.42"/>
+<polygon fill="black" stroke="black" points="294.75,-95.83 295.13,-85.25 288.23,-93.28 294.75,-95.83"/>
+<text text-anchor="middle" x="307.33" y="-143.4" font-family="Helvetica,sans-Serif" font-size="10.00"> Very long press</text>
+</g>
+<!-- PLAYING&#45;&gt;TAP_TEMPO -->
+<g id="edge6" class="edge">
+<title>PLAYING-&gt;TAP_TEMPO</title>
+<path fill="none" stroke="black" d="M189.08,-238.8C180.61,-237.05 171.73,-235.52 163.33,-234.6 140.24,-232.08 134.16,-232.08 111.07,-234.6 106.35,-235.12 101.47,-235.83 96.6,-236.66"/>
+<polygon fill="black" stroke="black" points="95.98,-233.22 86.81,-238.52 97.29,-240.1 95.98,-233.22"/>
+<text text-anchor="middle" x="137.2" y="-237.6" font-family="Helvetica,sans-Serif" font-size="10.00"> Long press</text>
+</g>
+<!-- RECORDING -->
+<g id="node7" class="node">
+<title>RECORDING</title>
+<ellipse fill="lightgray" stroke="black" cx="433.2" cy="-249.6" rx="43.2" ry="43.2"/>
+<text text-anchor="middle" x="433.2" y="-246" font-family="Helvetica,sans-Serif" font-size="12.00">RECORDING</text>
+</g>
+<!-- PLAYING&#45;&gt;RECORDING -->
+<g id="edge4" class="edge">
+<title>PLAYING-&gt;RECORDING</title>
+<path fill="none" stroke="black" d="M273.57,-239.62C294.79,-235.73 320.91,-232.63 344.42,-234.6 355.75,-235.55 367.81,-237.17 379.28,-239.01"/>
+<polygon fill="black" stroke="black" points="378.55,-242.43 388.99,-240.64 379.71,-235.53 378.55,-242.43"/>
+<text text-anchor="middle" x="332.2" y="-237.6" font-family="Helvetica,sans-Serif" font-size="10.00"> Click</text>
+</g>
+<!-- RECORDING&#45;&gt;WAITING -->
+<g id="edge8" class="edge">
+<title>RECORDING-&gt;WAITING</title>
+<path fill="none" stroke="black" d="M406.01,-283.22C387.72,-304.92 362.9,-333.91 340.2,-358.8 322.42,-378.3 302.11,-399.44 285.01,-416.92"/>
+<polygon fill="black" stroke="black" points="282.97,-414.01 278.46,-423.59 287.96,-418.91 282.97,-414.01"/>
+<text text-anchor="middle" x="387.53" y="-349.8" font-family="Helvetica,sans-Serif" font-size="10.00"> BLE Disconnect</text>
+</g>
+<!-- RECORDING&#45;&gt;PLAYING -->
+<g id="edge9" class="edge">
+<title>RECORDING-&gt;PLAYING</title>
+<path fill="none" stroke="black" d="M389.59,-249.6C359.14,-249.6 318.28,-249.6 285.69,-249.6"/>
+<polygon fill="black" stroke="black" points="286.05,-246.1 276.05,-249.6 286.05,-253.1 286.05,-246.1"/>
+<text text-anchor="middle" x="332.2" y="-255.6" font-family="Helvetica,sans-Serif" font-size="10.00"> 2-bars recorded</text>
 </g>
 </g>
 </svg>

@@ -14,18 +14,9 @@
 
 #include "ble_midi.h"
 #include "button.h"
+#include "display.h"
+#include "looper.h"
 #include "tap_tempo.h"
-
-#define LOOPER_DEFAULT_BPM 120   // Beats per minute (global tempo)
-#define LOOPER_BARS 2            // Loop length in bars
-#define LOOPER_BEATS_PER_BAR 4   // Time signature numerator (e.g., 4/4)
-#define LOOPER_STEPS_PER_BEAT 4  // Resolution (4 = 16th notes)
-
-#define LOOPER_TOTAL_STEPS (LOOPER_STEPS_PER_BEAT * LOOPER_BEATS_PER_BAR * LOOPER_BARS)
-#define LOOPER_CLICK_DIV (LOOPER_TOTAL_STEPS / LOOPER_BARS / LOOPER_STEPS_PER_BEAT )
-
-#define ANSI_BG_HILITE "\x1b[47m"
-#define ANSI_CLEAR "\x1b[0m"
 
 enum {
     MIDI_CHANNEL_1 = 0,
@@ -41,44 +32,6 @@ enum {
     OPEN_HIHAT = 46,
     CYMBAL = 49,
 };
-
-// Represents the current playback or recording state.
-typedef enum {
-    LOOPER_STATE_WAITING = 0,   // BLE not connected, waiting.
-    LOOPER_STATE_PLAYING,       // Playing back loop.
-    LOOPER_STATE_RECORDING,     // recording in progress.
-    LOOPER_STATE_TRACK_SWITCH,  // Switching to next track.
-    LOOPER_STATE_TAP_TEMPO,
-    LOOPER_STATE_CLEAR_ALL,
-} looper_state_t;
-
-typedef struct {
-    uint64_t last_step_time_us;      // Time of last step transition
-    uint64_t button_press_start_us;  // Timestamp when button was pressed
-} looper_timing_t;
-
-/*
- * Runtime playback state, managed globally.
- * Holds track index, current step, recording progress, and last tick time.
- */
-typedef struct {
-    uint32_t bpm;
-    uint32_t step_duration_ms;
-    looper_state_t state;          // Current looper mode (e.g. PLAYING, RECORDING).
-    uint8_t current_track;         // Index of the active track (for recording or preview).
-    uint8_t current_step;          // Index of the current step in the sequence loop.
-    uint8_t recording_step_count;  // Number of steps recorded so far in this session.
-    looper_timing_t timing;
-} looper_status_t;
-
-// Represents each MIDI track with note and sequence pattern.
-typedef struct {
-    const char *name;                       // Human-readable name of the track.
-    uint8_t note;                           // MIDI note to trigger.
-    uint8_t channel;                        // MIDI channel.
-    bool pattern[LOOPER_TOTAL_STEPS];       // Current active pattern
-    bool undo_pattern[LOOPER_TOTAL_STEPS];  // Backup for undoing modifications
-} track_t;
 
 static looper_status_t looper_status = {.bpm = LOOPER_DEFAULT_BPM, .state = LOOPER_STATE_WAITING};
 
@@ -104,9 +57,7 @@ static void looper_update_bpm(uint32_t bpm) {
 }
 
 // Sends a click/hi-hat
-static void send_midi_click() {
-    ble_midi_send_note(MIDI_CHANNEL_1, RIM_SHOT, 0x20);
-}
+static void send_midi_click() { ble_midi_send_note(MIDI_CHANNEL_1, RIM_SHOT, 0x20); }
 
 /*
  * Manages LED blinking when in WAITING state (BLE disconnected).
@@ -114,49 +65,6 @@ static void send_midi_click() {
  */
 static void looper_update_status_led(void) {
     cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, status_led_on);
-}
-
-// Prints a single track row with step highlighting and note indicators.
-static void print_track(const char *label, const bool *steps, bool is_selected) {
-    printf("%s%-11s [", is_selected ? ">" : " ", label);
-    for (int i = 0; i < LOOPER_TOTAL_STEPS; ++i) {
-        bool note_on = steps[i];
-        if (looper_status.current_step == i)
-            printf("%s%s%s", ANSI_BG_HILITE, note_on ? "x" : " ", ANSI_CLEAR);
-        else if (note_on)
-            printf("x");
-        else
-            printf(" ");
-    }
-    printf("]\n");
-}
-
-// Displays the looper's playback state, connection status, and track patterns.
-static void show_looper_status() {
-    bool connection = ble_midi_is_connected();
-    printf("[BLE %s]\n", connection ? "CONNECTED" : "WAITING");
-    const char *state_label = "PAUSE";
-    if (connection) {
-        switch (looper_status.state) {
-            case LOOPER_STATE_PLAYING:
-            case LOOPER_STATE_TRACK_SWITCH:
-                state_label = "PLAYING";
-                break;
-            case LOOPER_STATE_RECORDING:
-                state_label = "RECORDING";
-                break;
-            case LOOPER_STATE_TAP_TEMPO:
-                state_label = "TAP TEMPO";
-                break;
-            default:
-                break;
-        }
-    }
-
-    printf("[%s]\n", state_label);
-    for (uint8_t i = 0; i < NUM_TRACKS; i++)
-        print_track(tracks[i].name, tracks[i].pattern, i == looper_status.current_track);
-    fflush(stdout);
 }
 
 // Sends a MIDI click at specific steps to indicate rhythm.
@@ -229,14 +137,14 @@ static void looper_clear_all_tracks() {
 // Processes the looper's main state machine, called by the step timer.
 static void looper_process_state(btstack_timer_source_t *ts) {
     uint64_t start_us = time_us_64();
-    bool connection = ble_midi_is_connected();
-    show_looper_status();
+    bool is_connected = ble_midi_is_connected();
+    display_update_looper_status(is_connected, &looper_status, tracks, NUM_TRACKS);
 
-    if (!connection)
+    if (!is_connected)
         looper_status.state = LOOPER_STATE_WAITING;
     switch (looper_status.state) {
         case LOOPER_STATE_WAITING:
-            if (connection) {
+            if (is_connected) {
                 looper_status.state = LOOPER_STATE_PLAYING;
                 looper_status.current_step = 0;
             }
@@ -270,7 +178,7 @@ static void looper_process_state(btstack_timer_source_t *ts) {
             looper_set_status_led((looper_status.current_step % LOOPER_CLICK_DIV) == 0);
             looper_next_step(start_us);
             break;
-        case LOOPER_STATE_CLEAR_ALL:
+        case LOOPER_STATE_CLEAR_TRACKS:
             looper_clear_all_tracks();
             looper_status.current_track = 0;
             looper_next_step(start_us);
@@ -339,7 +247,7 @@ static void looper_handle_button_event(button_event_t event) {
             break;
         case BUTTON_EVENT_VERY_LONG_HOLD_RELEASE:
             // ≥5 s hold: clear track data
-            looper_status.state = LOOPER_STATE_CLEAR_ALL;
+            looper_status.state = LOOPER_STATE_CLEAR_TRACKS;
             ble_midi_send_note(MIDI_CHANNEL_10, HAND_CLAP, 0x7f);
             break;
         default:
@@ -361,7 +269,7 @@ int main(void) {
                 looper_status.state = LOOPER_STATE_PLAYING;
             }
         } else {
-             looper_handle_button_event(event);
+            looper_handle_button_event(event);
         }
         looper_update_status_led();
     }

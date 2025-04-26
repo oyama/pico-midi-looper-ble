@@ -13,7 +13,7 @@ Internally, the system is organized around two central mechanisms:
 
 ## Looper State Machine
 
-The firmware centres around a main FSM with five states: `Waiting / Playing / Recording / TrackSwitch / TapTempo`. The updated diagram reflects this.
+The firmware centres around a main FSM with five states: `Waiting / Playing / Recording / TrackSwitch / TapTempo / ClearTracks`. The updated diagram reflects this.
 
 ![Looper FSM](looper_fsm.svg)
 
@@ -21,8 +21,8 @@ The firmware centres around a main FSM with five states: `Waiting / Playing / Re
 - **Playing**: Default playback state, running the sequencer.
 - **Recording**: Temporarily active while recording note input for 2 bars.
 - **TrackSwitch**: Transition state when switching between drum tracks.
-- **TapTempo**: temporary mode for tap-tempo BPM entry.
-
+- **TapTempo**: Temporary mode for tap-tempo BPM entry.
+- **ClearTracks**: Transision state when clearing all track patterns.
 
 State transitions are triggered by BLE connection events and button presses. The state machine is evaluated on every step clock tick within the main loop logic.
 
@@ -36,7 +36,7 @@ looper_status.step_duration_ms = 60000 / (current_bpm * LOOPER_STEPS_PER_BEAT);
 btstack_run_loop_set_timer(&step_timer, looper_status.step_duration_ms);
 ```
 
-- Each loop consists of 32 steps (4 beats × 4 subdivisions × 2 bars).
+- Each loop consists of 32 steps (4 beats x 4 subdivisions x 2 bars).
 - A timer (btstack run loop timer) triggers every LOOPER\_STEP\_DURATION\_MS.
 - On each tick, the looper updates the current step, outputs any matching notes, and transitions state if necessary.
 
@@ -48,13 +48,15 @@ An internal FSM (in `button.c`) detects three types of user actions:
 - `BUTTON_EVENT_DOWN`
 - `BUTTON_EVENT_CLICK_RELEASE`
 - `BUTTON_EVENT_HOLD_RELEASE`
-- `BUTTON_EVENT_LONG_HOLD_BEGIN`
+- `BUTTON_EVENT_LONG_HOLD_RELEASE`
+- `BUTTON_EVENT_VERY_LONG_HOLD_RELEASE`
 
 These events are interpreted by the looper (in `main.c`) depending on its current state:
 
-- **Short Press**: Starts recording, and toggles a note at the quantized step.
-- **Long Press(≥ 0.5 s)**: Switches to the next track.
-- **Very-long press (≥2 s)**: enters Tap-tempo mode from Playing. Inside Tap-tempo a ≥0.5 s long-press confirms the BPM and returns to Playing.
+- **Click**: Starts recording, and toggles a note at the quantized step.
+- **Hold release(≥ 0.5 s)**: Switches to the next track.
+- **Long hold release (≥2 s)**: Enters Tap-tempo mode from Playing. Inside Tap-tempo a ≥0.5 s hold-release confirms the BPM and returns to Playing.
+- **Very long hold release (≥5 s)**: Enters Clear-track mode from Playing. After deleting a tracks, return to Playing.
 
 ## Track Structure
 
@@ -79,11 +81,13 @@ The BLE connection status is monitored and used to gate playback and visual LED 
 | ---------------- | ----------------------------------------------------------- |
 | `src/main.c`     | Looper state machine, step sequencer, button event handling |
 | `src/button.c`   | Button press detection, debouncing, and press-type FSM      |
+| `src/tap_tempo.c`| Tap-tempo detection & BPM estimation sub-FSM                |
 | `src/ble_midi.c` | BLE advertising and MIDI note delivery                      |
-| `src/tap_tempo.c` | Tap-tempo detection & BPM estimation sub-FSM   |
+| `src/display.c`  | Display looper and track status on UART or USB CDC          |
+
 ## Design Goals
 
-- **Minimalism**: Core logic in under 400 lines of C
+- **Minimalism**: Core logic in under 300 lines of C
 - **Readability**: Clear structure and FSM-based design
 - **Extensibility**: Easy to add new tracks, note types, or input methods
 - **Educational Value**: Suitable for workshops and experimentation

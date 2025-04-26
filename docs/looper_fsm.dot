@@ -1,31 +1,41 @@
-digraph looper_fsm {
-    /* -------- common style -------- */
-    node [shape=circle, fixedsize=true, width=1.4, height=1.4,
-          fontname="Helvetica", style=filled, fillcolor=lightgray, fontsize=14];
-    edge [fontname="Helvetica", fontsize=13];
+digraph LooperFSM {
+    rankdir=TB;
+    graph [nodesep=0.6, ranksep=1.5];
+    node [shape=circle, fixedsize=true, width=1.2, height=1.2,
+          fontname="Helvetica", style=filled, fillcolor=lightgray, fontsize=12];
+    edge [fontname="Helvetica", fontsize=10];
 
-    /* -------- states -------- */
-    Startup   [shape=point, width=0.1, label=""];
-    Waiting   [label="WAITING"];
-    Playing   [label="PLAYING"];
-    Recording [label="RECORDING"];
-    Switching [label="TRACK\nSWITCH"];
-    TapTempo  [label="TAP\nTEMPO"];
+    { rank=source; Startup; }
+    { rank=same; WAITING; }
+    { rank=sink; TRACK_SWITCH; CLEAR_TRACKS; }
+    { rank=same; TAP_TEMPO; PLAYING; RECORDING; }
 
-    /* -------- system events -------- */
-    Startup  -> Waiting   [label="Power-on"];
-    Waiting  -> Playing   [label="BLE connect"];
-    Playing  -> Waiting   [label="BLE disconnect"];
-    Recording-> Waiting   [label="BLE disconnect"];
-    TapTempo -> Waiting   [label="BLE disconnect"];
+    Startup        [shape=point, width=0.1, label=""];
+    WAITING;
+    RECORDING;
+    PLAYING;
+    TAP_TEMPO[label="TAP\nTEMPO"];
+    TRACK_SWITCH[label="TRACK\nSWITCH"];
+    CLEAR_TRACKS[label="CLEAR\nTRACKS"];
 
-    /* -------- looper button events -------- */
-    Playing   -> Recording [label="Short press"];
-    Recording -> Playing   [label="2-bar done"];
-    Playing   -> Switching [label="Long press"];
-    Switching -> Playing   [label="Release"];
+    // Transitions
+    Startup -> WAITING         [label=" Power-on"];
 
-    /* -------- tap-tempo mode switch -------- */
-    Playing  -> TapTempo [label="Very-long press\n(≥ 2 s)"];
-    TapTempo -> Playing  [label="Long-press release\n(≥ 0.5 s)"];
+    WAITING -> PLAYING         [label=" BLE Connect"];
+
+    PLAYING -> WAITING         [label=" BLE Disconnect"];
+    PLAYING -> RECORDING       [label=" Click"];
+    PLAYING -> TRACK_SWITCH    [label=" Press"];
+    PLAYING -> TAP_TEMPO       [label=" Long press", constraint=false];
+    PLAYING -> CLEAR_TRACKS    [label=" Very long press"];
+
+    RECORDING -> WAITING       [label=" BLE Disconnect"];
+    RECORDING -> PLAYING       [label=" 2-bars recorded"];
+
+    TRACK_SWITCH -> PLAYING    [label=" Track switched"];
+
+    TAP_TEMPO -> WAITING       [label=" BLE Disconnect"];
+    TAP_TEMPO -> PLAYING       [label=" Button press"];
+
+    CLEAR_TRACKS -> PLAYING    [label=" Deleted"];
 }

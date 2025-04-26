@@ -57,11 +57,12 @@ All interaction is handled via a single button. The length of your press determi
 
 ### Button Actions
 
-| Action                 | Hold-time |  Result                                                                               |
-|------------------------|-----------|---------------------------------------------------------------------------------------|
-| **Click**        | < 0.5 s   | Records a note on the current track. Automatically returns to playback after two bars |
-| **Press**         | ≥ 0.5 s  | Switches to the next track (hand-clap cue)                                            |
-| **Long Press**    | ≥ 2 s    | Enters **Tap-tempo** mode. Long Press again (≥0.5 s) to confirm the tempo and return to Playing mode.|
+| Action              | Hold-time |  Result                                                                               |
+|---------------------|-----------|---------------------------------------------------------------------------------------|
+| **Click**           | < 0.5 s   | Records a note on the current track. Automatically returns to playback after two bars |
+| **Press**           | ≥ 0.5 s  | Switches to the next track (hand-clap cue)                                            |
+| **Long Press**      | ≥ 2 s    | Enters **Tap-tempo** mode. Press again (≥0.5 s) to confirm the tempo and return to Playing mode.|
+| **Very Long Press** | ≥ 5 s    | Enters **Clear-tracks** mode. Automatically returns to playback after deleted.        |
 
 ### Tracks and Sounds
 
@@ -96,7 +97,7 @@ This will produce `pico-midi-looper.uf2` in the `build` directory.
 
 ## Architecture
 
-The core logic is organized as a small set of finite-state machines - the main looper (5 states) plus two tiny sub-FSMs for button timing and tap-tempo - yet still fits in under 400 lines of C.
+The core logic is organized as a small set of finite-state machines - the main looper (6 states) plus two tiny sub-FSMs for button timing and tap-tempo - yet still fits in under 300 lines of C.
 
 Read the full architecture with FSM diagram:
 [docs/architecture.md](docs/architecture.md)

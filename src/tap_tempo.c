@@ -11,10 +11,10 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include "pico/time.h"
+
 #include "tap_tempo.h"
 
 // Configuration constants
@@ -22,7 +22,7 @@ enum {
     TAP_MIN_BPM = 40,  // clamp lower bound
     TAP_MAX_BPM = 240,
     TAP_MAX_TAPS = 4,
-    TIMEOUT_US = 1500 * 1000,  // 1.5 s idle-timeout
+    TIMEOUT_US = 1000 * 1000,  // 1 s idle-timeout
 };
 
 typedef enum { TT_IDLE, TT_COLLECT } tt_state_t;
@@ -63,7 +63,7 @@ tap_result_t taptempo_handle_event(button_event_t ev) {
 
     switch (ctx.state) {
         case TT_IDLE:
-            if (ev == BUTTON_EVENT_HOLD_RELEASE) {
+            if (ev == BUTTON_EVENT_HOLD_RELEASE || ev == BUTTON_EVENT_LONG_HOLD_RELEASE) {
                 ctx.state = TT_IDLE;
                 return TAP_EXIT;
             } else if (ev == BUTTON_EVENT_CLICK_RELEASE) {
@@ -74,12 +74,15 @@ tap_result_t taptempo_handle_event(button_event_t ev) {
             return TAP_NONE;
 
         case TT_COLLECT:
+            if (ev == BUTTON_EVENT_HOLD_RELEASE || ev == BUTTON_EVENT_LONG_HOLD_RELEASE) {
+                ctx.state = TT_IDLE;
+                return TAP_EXIT;
+            }
             if (ctx.count && (now - ctx.stamp[ctx.count ? ctx.count - 1 : 0]) > TIMEOUT_US) {
                 ctx.count = 0;
                 ctx.state = TT_IDLE;
                 return TAP_NONE;
-            }
-            else if (ev == BUTTON_EVENT_CLICK_RELEASE) {
+            } else if (ev == BUTTON_EVENT_CLICK_RELEASE) {
                 if (ctx.count < TAP_MAX_TAPS)
                     ctx.stamp[ctx.count++] = now;
 
