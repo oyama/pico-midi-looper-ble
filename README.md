@@ -79,6 +79,13 @@ All interaction is handled via a single button. The length of your press determi
 - Notes are automatically quantized to 1/16th-note steps.
 - Recording only affects the currently selected track.
 
+### Serial Pattern Display
+
+When you open a UART or USB CDC serial terminal at 115200 bps, the looper prints the current 32-step pattern for each track on every bar boundary:
+
+![display](https://github.com/user-attachments/assets/6b25c5df-5981-4975-ab06-2c9d7ea5d3c6)
+
+
 ## Building from Source
 
 This project uses the [pico-sdk](https://github.com/raspberrypi/pico-sdk).
