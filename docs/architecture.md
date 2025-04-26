@@ -13,7 +13,7 @@ Internally, the system is organized around two central mechanisms:
 
 ## Looper State Machine
 
-The firmware centres around a main FSM with five states: `Waiting / Playing / Recording / TrackSwitch / TapTempo / ClearTracks`. The updated diagram reflects this.
+The firmware centres around a main FSM with six states: `Waiting / Playing / Recording / TrackSwitch / TapTempo / ClearTracks`. The updated diagram reflects this.
 
 ![Looper FSM](looper_fsm.svg)
 
@@ -43,7 +43,7 @@ btstack_run_loop_set_timer(&step_timer, looper_status.step_duration_ms);
 ## Button Handling
 
 The BOOTSEL button is monitored by reading its state using a method specific to the Pico's onboard configuration.
-An internal FSM (in `button.c`) detects three types of user actions:
+An internal FSM (in `button.c`) detects five types of user actions:
 
 - `BUTTON_EVENT_DOWN`
 - `BUTTON_EVENT_CLICK_RELEASE`
