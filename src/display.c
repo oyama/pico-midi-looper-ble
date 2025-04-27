@@ -45,7 +45,8 @@ static void print_track(const char *label, const bool *steps, uint8_t current_st
 // Displays the looper's playback state, connection status, and track patterns.
 void display_update_looper_status(bool ble_connected, const looper_status_t *looper,
                                   const track_t *tracks, size_t num_tracks) {
-    printf("[%s]\n", ble_connected ? ANSI_BRIGHT_GREEN "BLE CONNECTED" ANSI_RESET: ANSI_BRIGHT_BLUE "BLE WAITING" ANSI_RESET);
+    size_t n = printf("[%s]", ble_connected ? ANSI_BRIGHT_GREEN "BLE-MIDI CONNECTED" ANSI_RESET: ANSI_BRIGHT_BLUE "BLE-MIDI WAITING" ANSI_RESET);
+    printf("%*s" ANSI_BOLD "#Pico_MIDI_Looper" ANSI_RESET "\n", 39 - n, " ");
     const char *state_label = ANSI_BRIGHT_BLUE "WAITING" ANSI_RESET;
     if (ble_connected) {
         switch (looper->state) {
@@ -64,7 +65,7 @@ void display_update_looper_status(bool ble_connected, const looper_status_t *loo
         }
     }
 
-    printf("[%s] %u bpm\n", state_label, looper->bpm);
+    printf("[%s] %s%u bpm" ANSI_RESET "\n", state_label, ((looper->current_step % LOOPER_CLICK_DIV) == 0 ? ANSI_BOLD : ""), looper->bpm);
     for (uint8_t i = 0; i < num_tracks; i++)
         print_track(tracks[i].name, tracks[i].pattern, looper->current_step,
                     i == looper->current_track);
