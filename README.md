@@ -2,31 +2,34 @@
 
 [![Build](https://github.com/oyama/pico-midi-looper/actions/workflows/build-firmware.yml/badge.svg)](https://github.com/oyama/pico-midi-looper/actions)
 
-A minimal 2-bars drum looper for Raspberry Pi Pico W that speaks Bluetooth Low-Energy MIDI (BLE-MIDI).
-Build a thumb-sized looper in under 5 minutes —ideal for workshops, prototyping, or live-coding sets.
-Record and play back grooves with nothing but the built-in `BOOTSEL` button.
+## Overview
+
+The Pico MIDI Looper is a minimalist 2-bar drum looping device that leverages the Raspberry Pi Pico W's capabilities to provide wireless MIDI functionality via Bluetooth Low Energy (BLE-MIDI). Its primary purpose is to offer a compact, easy-to-build musical instrument that enables rhythm creation with minimal hardware requirements.
+
+The system is designed for:
+- Educational contexts and workshops
+- Live performance setups
+- Prototyping musical ideas
+- Minimalist music creation
+
+The looper requires only the standard Raspberry Pi Pico W hardware with no additional components, utilizing just the onboard BOOTSEL button for all interactions.
 
 [![YouTube Demo](https://img.youtube.com/vi/_J5nquZ1nLc/0.jpg)](https://www.youtube.com/shorts/_J5nquZ1nLc)
 
-## Bill of Materials
-
-| Item                       | Qty | Notes                                                     |
-|----------------------------|-----|-----------------------------------------------------------|
-| [Raspberry Pi Pico W](https://www.raspberrypi.com/products/raspberry-pi-pico/) | 1   | Comes with on-board BOOTSEL button and LED. |
-| Micro-USB cable            | 1   | For power and firmware install.                           |
-| BLE-MIDI-capable synth/DAW | 1   | e.g. GarageBand on iOS, Logic Pro, etc.                   |
-
 ## Features
 
-- BLE-MIDI compatible (works with GarageBand, DAWs, and synth apps)
-- 2-bars loop (32 steps: 4 beats x 4 subdivisions x 2 bars)
-- 4-tracks: Bass drum, Snare, Closed Hi-hat and Open Hi-hat
-- Tap-tempo: set the global BPM with 2-4 taps on the same button
-- Quantized note input
-- LED feedback for step visualization
-- Graphical track-pattern display via UART/USB-CDC serial terminal
-- Single-button control with expressive timing
-- Designed for education, installations, and minimalist instruments
+| Feature                | Description                                |
+|------------------------|--------------------------------------------|
+| BLE-MIDI Compatibility | Wirelessly connects to DAWs and synth apps |
+| 2-Bar Pattern Length   | 32 steps (4 beats × 4 subdivisions × 2 bars)|
+| 4-Track Structure      | Separate tracks for different drum sounds  |
+| Tap-Tempo              | Set BPM by tapping the button              |
+| Quantized Input        | Notes automatically align to 16th-note grid|
+| LED Feedback           | Visual indication of current step          |
+| Serial Display         | Pattern visualization via terminal         |
+| Single-Button Control  | All functions accessible through one button|
+
+The system is intentionally minimalist yet expressive, providing musicians with a compact but capable looping tool.
 
 ## Getting Started
 
@@ -36,7 +39,7 @@ You can either download a prebuilt `.uf2` from the [Releases](https://github.com
 
 To flash the firmware:
 
-1. Hold the `BOOTSEL` button while connecting your Pico W via USB.
+1. Hold the `BOOTSEL` button while connecting your Raspberry Pi Pico W via USB.
 2. Copy the `pico-midi-looper.uf2` file onto the mounted USB drive.
 3. The device will reboot and start running the looper.
 
@@ -47,7 +50,7 @@ To flash the firmware:
 3. Start recording and playing right away.
 
 For detailed instructions on iOS, see
-[Getting Started with GarageBand on iPhone](docs/getting-started-with-garageband.md)
+[Getting Started with GarageBand](docs/getting-started-with-garageband.md)
 
 ## How It Works
 
@@ -55,35 +58,50 @@ You build up your loop by switching between four tracks and entering notes step 
 Once powered on, the looper is ready to use.
 All interaction is handled via a single button. The length of your press determines the action.
 
-### Button Actions
+### Interaction
 
-| Action              | Hold-time |  Result                                                                               |
-|---------------------|-----------|---------------------------------------------------------------------------------------|
-| **Click**           | < 0.5 s   | Records a note on the current track. Automatically returns to playback after two bars |
-| **Press**           | ≥ 0.5 s  | Switches to the next track (hand-clap cue)                                            |
-| **Long Press**      | ≥ 2 s    | Enters **Tap-tempo** mode. Press again (≥0.5 s) to confirm the tempo and return to Playing mode.|
-| **Very Long Press** | ≥ 5 s    | Enters **Clear-tracks** mode. Automatically returns to playback after deleted.        |
+Interaction with the Pico MIDI Looper is handled entirely through the single BOOTSEL button, with different press durations triggering different functions.
+
+| Action          | Duration | Function                           |
+|-----------------|----------|------------------------------------|
+| Click           | < 0.5s   | Record a note on the current track |
+| Press           | ≥ 0.5s   | Switch to the next track           |
+| Long Press      | ≥ 2s     | Enter tap-tempo mode               |
+| Very Long Press | ≥ 5s     | Clear all tracks                   |
+
+The button interface is handled by a dedicated subsystem that detects press durations and generates appropriate events.
 
 ### Tracks and Sounds
 
-| Function          | Sound         | MIDI Note |
-|-------------------|---------------|-----------|
-| **Track 1**       | Bass Drum     | Note 36   |
-| **Track 2**       | Snare Drum    | Note 38   |
-| **Track 3**       | Closed Hi-Hat | Note 42   |
-| **Track 4**       | Open Hi-Hat   | Note 46   |
-| Track Switch Cue  | Hand Clap     | Note 39   |
-| Metronome Click   | Rim shot      | Note 37   |
+The looper provides four distinct tracks, each associated with a specific MIDI note number that corresponds to standard General MIDI drum sounds:
 
-- Switching tracks cycles through 1 to 4.
-- Notes are automatically quantized to 1/16th-note steps.
-- Recording only affects the currently selected track.
+| Track	  | Sound	        |MIDI Note |
+|---------|---------------|----------|
+| Track 1	| Bass Drum     | 36       |
+| Track 2	| Snare Drum    | 38       |
+| Track 3	| Closed Hi-Hat | 42       |
+| Track 4	| Open Hi-Hat   | 46       |
 
-### Serial Pattern Display
+Additionally, the system uses two special sounds for feedback:
 
-When you open a UART or USB CDC serial terminal at 115200 bps, the looper prints the current 32-step pattern for each track on every bar boundary:
+- Hand Clap (MIDI Note 39) for track switching cues
+- Rim Shot (MIDI Note 37) for metronome clicks
 
-![display](https://github.com/user-attachments/assets/2bc9e6dc-1d39-46f6-961d-7481962bb068)
+These MIDI notes are defined in the code and transmitted over BLE-MIDI to compatible receivers.
+
+### Display
+
+When connected to a serial terminal (at 115200 bps), the Pico MIDI Looper provides a visual representation of the current patterns across all tracks:
+
+![Pattern display over serial](https://github.com/user-attachments/assets/2bc9e6dc-1d39-46f6-961d-7481962bb068)
+
+The display shows:
+
+- All four tracks labeled by their drum sound
+- A 32-step sixteenth-note loop (2 bars)  
+- The current playback position
+
+This visual feedback makes it easier to understand the current pattern and position during playback and recording.
 
 ## Building from Source
 
@@ -99,7 +117,8 @@ mkdir build && cd build
 PICO_SDK_PATH=/path/to/pico-sdk cmake .. -DPICO_BOARD=pico_w
 make
 ```
-This will produce `pico-midi-looper.uf2` in the `build` directory.
+
+This will produce the `pico-midi-looper.uf2` in your `build/` directory.
 
 ## Architecture
 
@@ -119,5 +138,4 @@ We welcome pull requests and issues that help refine the code or enhance the use
 Feel free to fork the project and adapt it to your own creative or educational needs.
 We’d love to see how you build upon this tiny MIDI machine.
 
-Made with love in Japan.
-We hope you enjoy building with it as much as we did.
+_Made with love in Japan._
