@@ -43,5 +43,6 @@ typedef struct {
     uint8_t note;                           // MIDI note to trigger.
     uint8_t channel;                        // MIDI channel.
     bool pattern[LOOPER_TOTAL_STEPS];       // Current active pattern
-    bool undo_pattern[LOOPER_TOTAL_STEPS];  // Backup for undoing modifications
+    bool hold_pattern[LOOPER_TOTAL_STEPS];  // Temporary copy saved on button down.
+    bool undo_pattern[LOOPER_TOTAL_STEPS];  // Snapshot taken at the start of recording.
 } track_t;
