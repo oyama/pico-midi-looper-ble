@@ -82,25 +82,20 @@ button_event_t button_poll_event(void) {
     switch (fsm.state) {
         case BUTTON_STATE_IDLE:
             if (current_down) {
-                fsm.state = BUTTON_STATE_PRESS_DOWN;
                 fsm.press_start_us = now_us;
+                fsm.state = BUTTON_STATE_PRESS_DOWN;
                 ev = BUTTON_EVENT_DOWN;
             }
             break;
-
         case BUTTON_STATE_PRESS_DOWN:
             if (!current_down) {
                 fsm.state = BUTTON_STATE_IDLE;
                 ev = BUTTON_EVENT_CLICK_RELEASE;
-            } else if (now_us - fsm.press_start_us > LONG_PRESS_DURATION_US) {
-                fsm.state = BUTTON_STATE_LONG_HOLD_ACTIVE;
-                ev = BUTTON_EVENT_LONG_HOLD_BEGIN;
             } else if (now_us - fsm.press_start_us > PRESS_DURATION_US) {
                 fsm.state = BUTTON_STATE_HOLD_ACTIVE;
                 ev = BUTTON_EVENT_HOLD_BEGIN;
             }
             break;
-
         case BUTTON_STATE_HOLD_ACTIVE:
             if (!current_down) {
                 fsm.state = BUTTON_STATE_IDLE;
@@ -110,7 +105,6 @@ button_event_t button_poll_event(void) {
                 ev = BUTTON_EVENT_LONG_HOLD_BEGIN;
             }
             break;
-
         case BUTTON_STATE_LONG_HOLD_ACTIVE:
             if (!current_down) {
                 fsm.state = BUTTON_STATE_IDLE;
