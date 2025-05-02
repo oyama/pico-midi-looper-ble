@@ -234,7 +234,7 @@ static void looper_handle_button_event(button_event_t event) {
             looper_status.timing.button_press_start_us = time_us_64();
             looper_perform_note(track->channel, track->note, 0x7f);
             // Backup track pattern in case this press becomes a long-press (undo)
-            memcpy(track->undo_pattern, track->pattern, LOOPER_TOTAL_STEPS);
+            memcpy(track->hold_pattern, track->pattern, LOOPER_TOTAL_STEPS);
             break;
         case BUTTON_EVENT_CLICK_RELEASE:
             // Short press release: quantize and record step
@@ -248,7 +248,7 @@ static void looper_handle_button_event(button_event_t event) {
             break;
         case BUTTON_EVENT_HOLD_RELEASE:
             // Long press release: revert track and switch
-            memcpy(track->pattern, track->undo_pattern, LOOPER_TOTAL_STEPS);
+            memcpy(track->pattern, track->hold_pattern, LOOPER_TOTAL_STEPS);
             looper_status.state = LOOPER_STATE_TRACK_SWITCH;
             break;
         case BUTTON_EVENT_LONG_HOLD_RELEASE:
