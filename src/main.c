@@ -234,29 +234,22 @@ static void looper_handle_button_event(button_event_t event) {
             looper_status.timing.button_press_start_us = time_us_64();
             looper_perform_note(track->channel, track->note, 0x7f);
             // Backup track pattern in case this press becomes a long-press (undo)
-            memcpy(track->hold_pattern, track->pattern, LOOPER_TOTAL_STEPS);
-           break;
+            memcpy(track->undo_pattern, track->pattern, LOOPER_TOTAL_STEPS);
+            break;
         case BUTTON_EVENT_CLICK_RELEASE:
             // Short press release: quantize and record step
             if (looper_status.state != LOOPER_STATE_RECORDING) {
                 looper_status.recording_step_count = 0;
                 looper_status.state = LOOPER_STATE_RECORDING;
-                memcpy(track->undo_pattern, track->pattern, LOOPER_TOTAL_STEPS);
                 memset(track->pattern, 0, LOOPER_TOTAL_STEPS);
             }
             uint8_t quantized_step = looper_quantize_step();
             track->pattern[quantized_step] = true;
             break;
         case BUTTON_EVENT_HOLD_RELEASE:
-            if (looper_status.state == LOOPER_STATE_RECORDING) {
-                // Cancel recording and restore the pattern from pre-recording snapshot
-                memcpy(track->pattern, track->undo_pattern, LOOPER_TOTAL_STEPS);
-                looper_status.state = LOOPER_STATE_PLAYING;
-            } else if (looper_status.state == LOOPER_STATE_PLAYING) {
-                // Long-press during playback: switch track without applying changes
-                memcpy(track->pattern, track->hold_pattern, LOOPER_TOTAL_STEPS);
-                looper_status.state = LOOPER_STATE_TRACK_SWITCH;
-            }
+            // Long press release: revert track and switch
+            memcpy(track->pattern, track->undo_pattern, LOOPER_TOTAL_STEPS);
+            looper_status.state = LOOPER_STATE_TRACK_SWITCH;
             break;
         case BUTTON_EVENT_LONG_HOLD_RELEASE:
             // ≥2 s hold: enter Tap-tempo (no track switch)
