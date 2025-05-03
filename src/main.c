@@ -29,6 +29,7 @@ int main(void) {
     printf("[MAIN] Pico MIDI Looper start\n");
     while (true) {
         looper_handle_input();
+        sleep_us(500);
     }
     return 0;
 }
