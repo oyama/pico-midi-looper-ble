@@ -113,16 +113,6 @@ static void looper_next_step(uint64_t now_us) {
     looper_status.current_step = (looper_status.current_step + 1) % LOOPER_TOTAL_STEPS;
 }
 
-// Re-arms the timer to fire again after LOOPER_STEP_DURATION_MS, adjusting for processing time.
-static void looper_reset_step_timer(btstack_timer_source_t *ts, uint64_t start_us) {
-    uint64_t handler_delay_ms = (time_us_64() - start_us) / 1000;
-    uint32_t delay = (handler_delay_ms >= looper_status.step_duration_ms)
-                         ? 1
-                         : looper_status.step_duration_ms - handler_delay_ms;
-    btstack_run_loop_set_timer(ts, delay);
-    btstack_run_loop_add_timer(ts);
-}
-
 /*
  * Returns the step index nearest to the stored `button_press_start_us` timestamp.
  * The result is quantized to the nearest step relative to the last tick.
@@ -146,8 +136,7 @@ static void looper_clear_all_tracks() {
 }
 
 // Processes the looper's main state machine, called by the step timer.
-static void looper_process_state(btstack_timer_source_t *ts) {
-    uint64_t start_us = time_us_64();
+static void looper_process_state(uint64_t start_us) {
     bool ready  = looper_perform_ready();
     display_update_looper_status(ready, &looper_status, tracks, NUM_TRACKS);
 
@@ -197,8 +186,21 @@ static void looper_process_state(btstack_timer_source_t *ts) {
         default:
             break;
     }
+}
 
-    looper_reset_step_timer(ts, start_us);
+// Runs `looper_process_state()` and reschedules the BTstack timer.
+static void looper_step_timer_handler(btstack_timer_source_t *ts) {
+    uint64_t start_us = time_us_64();
+
+    looper_process_state(start_us);
+
+    // Re-arms the timer to fire again after `step_duration_ms`, adjusting for processing time.
+    uint64_t handler_delay_ms = (time_us_64() - start_us) / 1000;
+    uint32_t delay = (handler_delay_ms >= looper_status.step_duration_ms)
+                         ? 1
+                         : looper_status.step_duration_ms - handler_delay_ms;
+    btstack_run_loop_set_timer(ts, delay);
+    btstack_run_loop_add_timer(ts);
 }
 
 // Routes button events related to tap-tempo mode.
@@ -271,7 +273,7 @@ int main(void) {
     cyw43_arch_init();
     looper_update_bpm(LOOPER_DEFAULT_BPM);
 
-    ble_midi_init(looper_process_state, looper_status.step_duration_ms);
+    ble_midi_init(looper_step_timer_handler, looper_status.step_duration_ms);
     printf("[MAIN] BLE MIDI Looper start\n");
     while (true) {
         button_event_t event = button_poll_event();
