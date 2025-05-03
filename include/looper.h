@@ -1,5 +1,8 @@
 #pragma once
 
+#include "button.h"
+#include "ble_midi.h"
+
 #define LOOPER_DEFAULT_BPM 120   // Beats per minute (global tempo)
 #define LOOPER_BARS 2            // Loop length in bars
 #define LOOPER_BEATS_PER_BAR 4   // Time signature numerator (e.g., 4/4)
@@ -45,3 +48,18 @@ typedef struct {
     bool pattern[LOOPER_TOTAL_STEPS];       // Current active pattern
     bool hold_pattern[LOOPER_TOTAL_STEPS];  // Temporary copy saved on button down.
 } track_t;
+
+
+looper_status_t *looper_status_get(void);
+
+uint32_t looper_get_step_interval_ms(void);
+
+void looper_update_bpm(uint32_t bpm);
+
+void looper_process_state(uint64_t start_us);
+
+void looper_handle_button_event(button_event_t event);
+
+void looper_handle_tick(btstack_timer_source_t *ts);
+
+void looper_handle_input(void);

@@ -10,8 +10,9 @@ add_executable(${CMAKE_PROJECT_NAME}
   src/main.c
   src/ble_midi.c
   src/button.c
-  src/tap_tempo.c
   src/display.c
+  src/looper.c
+  src/tap_tempo.c
 )
 pico_btstack_make_gatt_header(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/midi_service.gatt)
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include)
