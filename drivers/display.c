@@ -12,7 +12,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#include "ble_midi.h"
+#include "drivers/ble_midi.h"
 #include "looper.h"
 
 #define ANSI_RESET "\x1b[0m"

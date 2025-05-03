@@ -10,8 +10,8 @@
 #include "pico/cyw43_arch.h"
 #include "pico/stdlib.h"
 
-#include "ble_midi.h"
 #include "looper.h"
+#include "drivers/ble_midi.h"
 
 /*
  * Entry point for the Pico MIDI Looper application.

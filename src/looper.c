@@ -14,9 +14,9 @@
 
 #include "pico/cyw43_arch.h"
 
-#include "ble_midi.h"
-#include "button.h"
-#include "display.h"
+#include "drivers/ble_midi.h"
+#include "drivers/button.h"
+#include "drivers/display.h"
 #include "looper.h"
 #include "tap_tempo.h"
 

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "button.h"
-#include "ble_midi.h"
+#include "drivers/button.h"
+#include "drivers/ble_midi.h"
 
 #define LOOPER_DEFAULT_BPM 120   // Beats per minute (global tempo)
 #define LOOPER_BARS 2            // Loop length in bars
