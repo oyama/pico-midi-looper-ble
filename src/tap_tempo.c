@@ -5,7 +5,7 @@
  *
  * ENTER : BUTTON_EVENT_LONG_HOLD_RELEASE (≥ 2 s)
  * EXIT : BUTTON_EVENT_HOLD_RELEASE (≥ 0.5 s)
- * Resets after 1.5 s inactivity or after 4 taps.
+ * Resets after 1 s inactivity or after 4 taps.
  *
  * Copyright 2025, Hiroyuki OYAMA
  *

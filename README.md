@@ -122,10 +122,26 @@ This will produce the `pico-midi-looper.uf2` in your `build/` directory.
 
 ## Architecture
 
-The core logic is organized as a small set of finite-state machines - the main looper (6 states) plus two tiny sub-FSMs for button timing and tap-tempo - yet still fits in under 300 lines of C.
+The firmware follows a clear two‑layer design.
 
-Read the full architecture with FSM diagram:
-[docs/architecture.md](docs/architecture.md)
+### Core layer
+
+Located under `src/`, the core consists of fewer than three hundred lines of hardware‑agnostic C. It is orchestrated by one main finite‑state machine—the *looper*, which advances the step sequencer—and one subsidiary FSM: the *tap‑tempo* estimator, which transforms a series of taps into a BPM value.
+
+### Drivers layer
+
+Residing in `drivers/`, the drivers provide the project’s only connection to hardware. Each driver exposes a narrow C interface and fulfils a single purpose—for example, sending BLE‑MIDI packets, debouncing the BOOTSEL switch, or printing a visualisation over UART. Replacing a driver (say, swapping BLE‑MIDI for USB‑MIDI or switching from a UART text view to an OLED display) requires no changes to the core and no rebuild of the remaining drivers.
+
+### How the firmware runs
+
+At run time the three state machines advance in response to two independent streams of events:
+
+1. **Tempo ticks** – A BTstack user timer fires at an interval derived from the current BPM. Each tick calls `looper_handle_tick`, moving the sequencer forward by exactly one step with sample‑accurate timing.
+2. **Button events** – The button driver debounces the hardware switch and raises high‑level events such as `CLICK_RELEASE` or `HOLD_RELEASE`. These events are processed by `looper_handle_input`, enabling the user to start or stop recording, switch tracks, clear patterns, or enter tap‑tempo mode.
+
+This split keeps time‑critical audio pacing deterministic while preserving a responsive user interface.
+
+*Read the full design in* [`docs/architecture.md`](docs/architecture.md).
 
 ## License
 

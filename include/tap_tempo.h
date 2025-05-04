@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "button.h"
+#include "drivers/button.h"
 
 typedef enum {
     TAP_NONE = 0,

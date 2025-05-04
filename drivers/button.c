@@ -14,9 +14,9 @@
 #include "hardware/sync.h"
 #include "pico/stdlib.h"
 
-#include "button.h"
+#include "drivers/button.h"
 
-#define BUTTON_DEBOUNCE_COUNT 10                   // consecutive reads needed for stable state
+#define BUTTON_DEBOUNCE_COUNT 5                    // consecutive reads needed for stable state
 #define PRESS_DURATION_US (500 * 1000)             // 500 ms
 #define LONG_PRESS_DURATION_US (2000 * 1000)       // 2 s
 #define VERY_LONG_PRESS_DURATION_US (5000 * 1000)  // 5 s
