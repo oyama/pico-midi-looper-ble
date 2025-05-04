@@ -10,7 +10,7 @@ This guide explains how to connect the Raspberry Pi Pico MIDI Looper to GarageBa
 
 ## 1. Start the Pico MIDI Looper
 
-Connect your Pico W (with the [Pico MIDI Looper firmware](https://github.com/oyama/pico-midi-looper/releases/latest) installed) to a power source. The onboard LED will begin blinking, indicating that it is waiting for a Bluetooth MIDI connection.
+Connect your Pico W (with the [Pico MIDI Looper BLE-MIDI firmware](https://github.com/oyama/pico-midi-looper-ble/releases/latest) installed) to a power source. The onboard LED will begin blinking, indicating that it is waiting for a Bluetooth MIDI connection.
 ![plug](https://github.com/user-attachments/assets/6164990e-653f-4680-a00d-201dc9530452)
 
 ## 2. Set Up GarageBand

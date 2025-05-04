@@ -1,6 +1,9 @@
-# Pico MIDI Looper
+# Pico MIDI Looper BLE-MIDI
 
-[![Build](https://github.com/oyama/pico-midi-looper/actions/workflows/build-firmware.yml/badge.svg)](https://github.com/oyama/pico-midi-looper/actions)
+[![Build](https://github.com/oyama/pico-midi-looper-ble/actions/workflows/build-firmware.yml/badge.svg)](https://github.com/oyama/pico-midi-looper-ble/actions)
+![Price](https://img.shields.io/badge/Hardware-$6-green)
+
+**This repository preserves the final BLE‑MIDI firmware (`v1.1.3-ble-final`)**
 
 ## Overview
 
@@ -35,12 +38,12 @@ The system is intentionally minimalist yet expressive, providing musicians with 
 
 ### Flash the Firmware
 
-You can either download a prebuilt `.uf2` from the [Releases](https://github.com/oyama/pico-midi-looper/releases/latest) page, or build it yourself.
+You can either download a prebuilt `.uf2` from the [Releases](https://github.com/oyama/pico-midi-looper-ble/releases/latest) page, or build it yourself.
 
 To flash the firmware:
 
 1. Hold the `BOOTSEL` button while connecting your Raspberry Pi Pico W via USB.
-2. Copy the `pico-midi-looper.uf2` file onto the mounted USB drive.
+2. Copy the `pico-midi-looper-ble.uf2` file onto the mounted USB drive.
 3. The device will reboot and start running the looper.
 
 ### Connect via BLE-MIDI
@@ -111,14 +114,14 @@ Refer to the official guide, [Getting Started with Raspberry Pi Pico](https://da
 Once ready:
 
 ```bash
-git clone https://github.com/oyama/pico-midi-looper.git
-cd pico-midi-looper
+git clone https://github.com/oyama/pico-midi-looper-ble.git
+cd pico-midi-looper-ble
 mkdir build && cd build
 PICO_SDK_PATH=/path/to/pico-sdk cmake .. -DPICO_BOARD=pico_w
 make
 ```
 
-This will produce the `pico-midi-looper.uf2` in your `build/` directory.
+This will produce the `pico-midi-looper-ble.uf2` in your `build/` directory.
 
 ## Architecture
 

@@ -38,31 +38,31 @@ jobs:
       working-directory: ${{github.workspace}}/pico-sdk
       run: git submodule update --init
 
-    - name: Checkout pico-midi-looper
+    - name: Checkout pico-midi-looper-ble
       uses: actions/checkout@v4
       with:
-        path: pico-midi-looper
+        path: pico-midi-looper-ble
 
     - name: Create Build Environment
-      working-directory: ${{github.workspace}}/pico-midi-looper
-      run:  cmake -E make_directory ${{github.workspace}}/pico-midi-looper/build
+      working-directory: ${{github.workspace}}/pico-midi-looper-ble
+      run:  cmake -E make_directory ${{github.workspace}}/pico-midi-looper-ble/build
 
     - name: Configure CMake
       shell: bash
-      working-directory: ${{github.workspace}}/pico-midi-looper/build
+      working-directory: ${{github.workspace}}/pico-midi-looper-ble/build
       run: PICO_SDK_PATH=../../pico-sdk cmake .. -DPICO_BOARD=pico_w -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 
     - name: Build
-      working-directory: ${{github.workspace}}/pico-midi-looper/build
+      working-directory: ${{github.workspace}}/pico-midi-looper-ble/build
       shell: bash
-      run: cmake --build . --target pico-midi-looper --config $BUILD_TYPE
+      run: cmake --build . --target pico-midi-looper-ble --config $BUILD_TYPE
 
     - name: Rename Binary with Tag
-      working-directory: pico-midi-looper/build
+      working-directory: pico-midi-looper-ble/build
       run: |
-        mv pico-midi-looper.uf2 pico-midi-looper-${{ github.ref_name }}.uf2
+        mv pico-midi-looper-ble.uf2 pico-midi-looper-ble-${{ github.ref_name }}.uf2
 
     - name: Create GitHub Release and Upload Binary
       uses: softprops/action-gh-release@v2
       with:
-        files: pico-midi-looper/build/pico-midi-looper-${{ github.ref_name }}.uf2
+        files: pico-midi-looper-ble/build/pico-midi-looper-ble-${{ github.ref_name }}.uf2
