@@ -4,16 +4,20 @@ This document describes the internal architecture of the Pico MIDI Looper firmwa
 
 ## Overview
 
-The Pico MIDI Looper is a BLE-MIDI-based loop recorder for Raspberry Pi Pico W.
-It records and plays back a two-bar loop (32 steps) consisting of four drum tracks … In addition to recording, a tap-tempo mode lets you adjust the global BPM on the fly with the same single button.
-Internally, the system is organized around two central mechanisms:
+The Pico MIDI Looper is a BLE‑MIDI‑based loop recorder for Raspberry Pi Pico W.
+It captures and replays a two‑bar (32‑step) pattern of four drum tracks with a single button.
+Besides recording, a tap‑tempo mode lets you adjust the global BPM on‑the‑fly with that same button.
 
-1. A **finite state machine (FSM)** governing the overall looper state
-2. A **timer-driven sequencer** that drives the step clock and MIDI note output
+Internally, the firmware is powered by two core mechanisms:
+
+1. **Main looper FSM** – governs the global state (*waiting*, *playing*, *recording*, *track‑switch*, *tap‑tempo prompt*, *clear*).
+2. **Timer‑driven sequencer** – a BTstack user‑timer fires once per step, advancing the pattern and sending the corresponding MIDI notes with sample‑accurate timing.
+
+A lightweight **tap‑tempo FSM** accompanies them, translating a series of taps into a new BPM value and handing it off to the looper without disturbing the timing loop.
 
 ## Looper State Machine
 
-The firmware centres around a main FSM with six states: `Waiting / Playing / Recording / TrackSwitch / TapTempo / ClearTracks`. The updated diagram reflects this.
+The firmware centers a main FSM with six states: `Waiting / Playing / Recording / TrackSwitch / TapTempo / ClearTracks`. The updated diagram reflects this.
 
 ![Looper FSM](looper_fsm.svg)
 
@@ -22,17 +26,17 @@ The firmware centres around a main FSM with six states: `Waiting / Playing / Rec
 - **Recording**: Temporarily active while recording note input for 2 bars.
 - **TrackSwitch**: Transition state when switching between drum tracks.
 - **TapTempo**: Temporary mode for tap-tempo BPM entry.
-- **ClearTracks**: Transision state when clearing all track patterns.
+- **ClearTracks**: Transition state when clearing all track patterns.
 
 State transitions are triggered by BLE connection events and button presses. The state machine is evaluated on every step clock tick within the main loop logic.
 
 ## Sequencer Timing
 
-The sequencer timer period is re-computed whenever the global BPM changes(e.g. after tap-tempo):
+The sequencer timer period is re-computed whenever the global BPM changes (e.g. after tap-tempo):
 
 ```c
 /* updated every time looper_update_bpm() is called */
-looper_status.step_duration_ms = 60000 / (current_bpm * LOOPER_STEPS_PER_BEAT);
+looper_status.step_duration_ms = 60000 / (bpm * LOOPER_STEPS_PER_BEAT);
 btstack_run_loop_set_timer(&step_timer, looper_status.step_duration_ms);
 ```
 
@@ -43,7 +47,7 @@ btstack_run_loop_set_timer(&step_timer, looper_status.step_duration_ms);
 ## Button Handling
 
 The BOOTSEL button is monitored by reading its state using a method specific to the Pico's onboard configuration.
-An internal FSM (in `button.c`) detects five types of user actions:
+An internal FSM (in `drivers/button.c`) detects five types of user actions:
 
 - `BUTTON_EVENT_DOWN`
 - `BUTTON_EVENT_CLICK_RELEASE`
@@ -51,12 +55,12 @@ An internal FSM (in `button.c`) detects five types of user actions:
 - `BUTTON_EVENT_LONG_HOLD_RELEASE`
 - `BUTTON_EVENT_VERY_LONG_HOLD_RELEASE`
 
-These events are interpreted by the looper (in `main.c`) depending on its current state:
+These events are interpreted by the looper (in `src/main.c`) depending on its current state:
 
 - **Click**: Starts recording, and toggles a note at the quantized step.
-- **Hold release(≥ 0.5 s)**: Switches to the next track.
-- **Long hold release (≥2 s)**: Enters Tap-tempo mode from Playing. Inside Tap-tempo a ≥0.5 s hold-release confirms the BPM and returns to Playing.
-- **Very long hold release (≥5 s)**: Enters Clear-track mode from Playing. After deleting a tracks, return to Playing.
+- **Hold-release(≥ 0.5 s)**: Switches to the next track.
+- **Long-hold-release (≥2 s)**: Enters Tap-tempo mode from Playing. Inside Tap-tempo a ≥0.5 s hold-release confirms the BPM and returns to Playing.
+- **Very-long-hold-release (≥5 s)**: Enters Clear-track mode from Playing. After deleting the tracks, return to Playing.
 
 ## Track Structure
 
@@ -65,7 +69,7 @@ Each track is represented by a `track_t` structure containing:
 - A note number (MIDI note)
 - A MIDI channel
 - A `pattern[]` bit array (one bool per step)
-- An `undo_pattern[]` to revert recording on long press
+- An `hold_pattern[]` to revert recording on press
 
 Four tracks are predefined: `Bass`, `Snare`, `Closed hi-hat` and `Open hi-hat` both on MIDI channel 10.
 
@@ -79,11 +83,12 @@ The BLE connection status is monitored and used to gate playback and visual LED 
 
 | File             | Responsibility                                              |
 | ---------------- | ----------------------------------------------------------- |
-| `src/main.c`     | Looper state machine, step sequencer, button event handling |
-| `src/button.c`   | Button press detection, debouncing, and press-type FSM      |
+| `src/main.c`     | Initialisation & run‑loop glue |
+| `src/looper.c`   | Looper state machine, step sequencer, button event handling |
 | `src/tap_tempo.c`| Tap-tempo detection & BPM estimation sub-FSM                |
-| `src/ble_midi.c` | BLE advertising and MIDI note delivery                      |
-| `src/display.c`  | Display looper and track status on UART or USB CDC          |
+| `drivers/button.c`   | Button press detection, debouncing, and press-type FSM      |
+| `drivers/ble_midi.c` | BLE advertising and MIDI note delivery                      |
+| `drivers/display.c`  | Display looper and track status on UART or USB CDC          |
 
 ## Design Goals
 
